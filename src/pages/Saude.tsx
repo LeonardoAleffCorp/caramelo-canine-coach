@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { getWeightStatus, getWeightImage, getWeightLabel } from '@/lib/weight';
+import { vaccineReminders } from '@/lib/vaccineReminders';
 
 interface Vaccine {
   id: string; name: string; applied_date: string; next_dose_date: string | null; notes: string | null;
@@ -42,7 +43,6 @@ export default function Saude() {
     if (v) setVaccines(v as Vaccine[]);
     if (w) setWeights(w as WeightLog[]);
 
-    // Get breed size
     const { data: breed } = await supabase.from('breeds').select('size_category').eq('name', pet.breed).maybeSingle();
     if (breed) setBreedSize(breed.size_category);
   };
@@ -80,7 +80,10 @@ export default function Saude() {
 
   const addWeight = async () => {
     if (!pet || !newWeight) return;
-    await supabase.from('weight_logs').insert({ pet_id: pet.id, weight_kg: parseFloat(newWeight) });
+    const weightVal = parseFloat(newWeight);
+    await supabase.from('weight_logs').insert({ pet_id: pet.id, weight_kg: weightVal });
+    // Also update the pet's weight_kg field
+    await supabase.from('pets').update({ weight_kg: weightVal }).eq('id', pet.id);
     toast.success('Peso registrado! ⚖️');
     setShowWeightModal(false); setNewWeight(''); fetchData();
   };
@@ -90,7 +93,7 @@ export default function Saude() {
     peso: Number(w.weight_kg),
   }));
 
-  const currentWeight = weights.length > 0 ? Number(weights[weights.length - 1].weight_kg) : null;
+  const currentWeight = weights.length > 0 ? Number(weights[weights.length - 1].weight_kg) : (pet?.weight_kg ? Number(pet.weight_kg) : null);
   const weightStatus = currentWeight ? getWeightStatus(currentWeight, breedSize) : null;
   const weightInfo = weightStatus ? getWeightLabel(weightStatus) : null;
   const weightImg = weightStatus ? getWeightImage(weightStatus) : null;
@@ -128,7 +131,6 @@ export default function Saude() {
           </TabsContent>
 
           <TabsContent value="peso" className="mt-4">
-            {/* Weight status image */}
             {weightImg && weightInfo && (
               <div className="mb-4 flex flex-col items-center rounded-2xl bg-card p-4 shadow-sm">
                 <img src={weightImg} alt={weightInfo.label} className="h-28 w-28 rounded-2xl object-cover" />
@@ -165,19 +167,24 @@ export default function Saude() {
           </TabsContent>
 
           <TabsContent value="lembretes" className="mt-4">
-            <div className="space-y-3">
-              {[
-                { emoji: '💊', name: 'Vermífugo', desc: 'A cada 3-6 meses' },
-                { emoji: '🦟', name: 'Antipulgas', desc: 'Mensal' },
-                { emoji: '💉', name: 'Vacina anual', desc: 'Verificar calendário' },
-              ].map((item) => (
-                <div key={item.name} className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-sm">
-                  <span className="text-2xl">{item.emoji}</span>
-                  <div>
-                    <div className="font-bold text-foreground">{item.name}</div>
-                    <div className="text-xs text-muted-foreground">{item.desc}</div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              📋 Calendário completo de cuidados para seu pet. Toque para ver detalhes.
+            </p>
+            <div className="space-y-3 pb-4">
+              {vaccineReminders.map((item) => (
+                <details key={item.name} className="group rounded-2xl bg-card shadow-sm overflow-hidden">
+                  <summary className="flex items-center gap-3 p-4 cursor-pointer list-none">
+                    <span className="text-2xl">{item.emoji}</span>
+                    <div className="flex-1">
+                      <div className="font-bold text-foreground">{item.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{item.frequency}</div>
+                    </div>
+                    <span className="text-muted-foreground text-xs group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="px-4 pb-4 pt-0">
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                   </div>
-                </div>
+                </details>
               ))}
             </div>
           </TabsContent>

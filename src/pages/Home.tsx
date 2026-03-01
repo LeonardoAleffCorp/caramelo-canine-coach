@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import Layout from '@/components/Layout';
 import PetSwitcher from '@/components/PetSwitcher';
 import { Progress } from '@/components/ui/progress';
+import { getBreedDefaultImage } from '@/lib/breedImages';
 
 interface Category {
   id: string;
@@ -60,11 +61,11 @@ export default function Home() {
         {/* Header with pet switcher */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {pet.photo_url ? (
-              <img src={pet.photo_url} alt={pet.name} className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-2xl">🐕</div>
-            )}
+            <img 
+              src={pet.photo_url || getBreedDefaultImage(pet.breed)} 
+              alt={pet.name} 
+              className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+            />
             <div>
               <h1 className="text-xl font-extrabold text-foreground">Olá, {pet.name}!</h1>
               <p className="text-xs text-muted-foreground">{pet.breed} • {ageDisplay}</p>
