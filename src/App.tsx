@@ -4,9 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { PetProvider, usePet } from "@/hooks/usePet";
+import { PetsProvider, usePets } from "@/hooks/usePets";
+import { CarameloLoadingScreen } from "@/components/CarameloLoadingScreen";
 import Auth from "./pages/Auth";
-import Onboarding from "./pages/Onboarding";
+import OnboardingNew from "./pages/OnboardingNew";
 import Home from "./pages/Home";
 import Treinos from "./pages/Treinos";
 import TreinoDetail from "./pages/TreinoDetail";
@@ -18,18 +19,14 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const { user, loading: authLoading } = useAuth();
-  const { hasPet, loading: petLoading } = usePet();
+  const { currentPet, loading: petLoading } = usePets();
 
   if (authLoading || petLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-5xl animate-bounce-in">🐕</div>
-      </div>
-    );
+    return <CarameloLoadingScreen />;
   }
 
   if (!user) return <Auth />;
-  if (!hasPet) return <Onboarding />;
+  if (!currentPet) return <OnboardingNew />;
 
   return (
     <Routes>
@@ -50,9 +47,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <PetProvider>
+          <PetsProvider>
             <AppRoutes />
-          </PetProvider>
+          </PetsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
