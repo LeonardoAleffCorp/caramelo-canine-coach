@@ -1,10 +1,11 @@
-import { Home, Dumbbell, Heart, User } from 'lucide-react';
+import { Home, Dumbbell, Heart, User, Palette } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/treinos', label: 'Treinos', icon: Dumbbell },
   { path: '/saude', label: 'Saúde', icon: Heart },
+  { path: '/avatar', label: 'Avatar', icon: Palette },
   { path: '/perfil', label: 'Perfil', icon: User },
 ];
 
@@ -21,10 +22,8 @@ export default function BottomNav() {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-4 py-1.5 transition-all ${
-                active
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+              className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-all ${
+                active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <tab.icon className={`h-5 w-5 ${active ? 'fill-primary/20' : ''}`} strokeWidth={active ? 2.5 : 2} />

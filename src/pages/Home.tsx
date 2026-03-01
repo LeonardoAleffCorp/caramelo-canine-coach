@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { usePet } from '@/hooks/usePet';
 import { getLevel, getLevelEmoji, getLevelProgress, getNextLevelXp } from '@/lib/xp';
+import { useSubscription } from '@/hooks/useSubscription';
 import Layout from '@/components/Layout';
 import PetSwitcher from '@/components/PetSwitcher';
 import { Progress } from '@/components/ui/progress';
@@ -35,6 +36,7 @@ function formatAge(ageMonths: number, birthDate?: string | null): string {
 
 export default function Home() {
   const { pet, stats } = usePet();
+  const { daysLeft, isTrial } = useSubscription();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -69,6 +71,14 @@ export default function Home() {
             </div>
           </div>
           <PetSwitcher />
+        </div>
+
+        {/* Subscription badge */}
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-accent/50 px-3 py-1.5">
+          <span className="text-sm">{isTrial ? '🎁' : '⭐'}</span>
+          <span className="text-xs font-bold text-foreground">
+            {isTrial ? 'Teste grátis' : 'Premium'} • {daysLeft} dia{daysLeft !== 1 ? 's' : ''} restante{daysLeft !== 1 ? 's' : ''}
+          </span>
         </div>
 
         {/* Streak + XP Cards */}
