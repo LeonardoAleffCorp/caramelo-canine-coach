@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      avatar_items: {
+        Row: {
+          category: string
+          color: string
+          emoji: string
+          id: string
+          is_premium: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          category: string
+          color?: string
+          emoji: string
+          id?: string
+          is_premium?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          color?: string
+          emoji?: string
+          id?: string
+          is_premium?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       breeds: {
         Row: {
           created_at: string
@@ -94,6 +124,42 @@ export type Database = {
           },
           {
             foreignKeyName: "pet_achievements_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pet_avatar: {
+        Row: {
+          equipped_at: string
+          id: string
+          item_id: string
+          pet_id: string
+        }
+        Insert: {
+          equipped_at?: string
+          id?: string
+          item_id: string
+          pet_id: string
+        }
+        Update: {
+          equipped_at?: string
+          id?: string
+          item_id?: string
+          pet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_avatar_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pet_avatar_pet_id_fkey"
             columns: ["pet_id"]
             isOneToOne: false
             referencedRelation: "pets"
@@ -244,6 +310,36 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          plan_type: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_categories: {
         Row: {
           emoji: string
@@ -340,6 +436,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vaccine_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_custom: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+        }
+        Relationships: []
       }
       vaccines: {
         Row: {
