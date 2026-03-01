@@ -9,6 +9,7 @@ import PetSwitcher from '@/components/PetSwitcher';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { Progress } from '@/components/ui/progress';
 import { getBreedDefaultImage } from '@/lib/breedImages';
+import { specialAccessories } from '@/lib/accessoryImages';
 
 interface Category {
   id: string;
@@ -19,6 +20,7 @@ interface Category {
 interface EquippedItem {
   category: string;
   emoji: string;
+  accessoryId?: string;
 }
 
 function formatAge(ageMonths: number, birthDate?: string | null): string {
@@ -56,14 +58,22 @@ export default function Home() {
 
   useEffect(() => {
     if (!pet) return;
-    const fetchEquipped = async () => {
-      const { data: avatarData } = await supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id);
-      if (!avatarData || avatarData.length === 0) { setEquippedItems([]); return; }
-      const itemIds = avatarData.map((d: any) => d.item_id);
-      const { data: itemsData } = await supabase.from('avatar_items').select('category, emoji').in('id', itemIds);
-      if (itemsData) setEquippedItems(itemsData as EquippedItem[]);
-    };
-    fetchEquipped();
+    // Load special accessories from localStorage
+    const stored = localStorage.getItem(`avatar_special_${pet.id}`);
+    if (stored) {
+      try {
+        const ids: string[] = JSON.parse(stored);
+        const items = ids
+          .map(id => specialAccessories.find(a => a.id === id))
+          .filter(Boolean)
+          .map(a => ({ category: a!.category, emoji: a!.emoji, accessoryId: a!.id }));
+        setEquippedItems(items);
+      } catch {
+        setEquippedItems([]);
+      }
+    } else {
+      setEquippedItems([]);
+    }
   }, [pet]);
 
   if (!pet || !stats) return null;
