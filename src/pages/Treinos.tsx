@@ -6,6 +6,33 @@ import Layout from '@/components/Layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+// Training images mapping
+import trainingSit from '@/assets/training-sit.png';
+import trainingPaw from '@/assets/training-paw.png';
+import trainingWalk from '@/assets/training-walk.png';
+import trainingStay from '@/assets/training-stay.png';
+
+const trainingImages: Record<string, string> = {
+  'sentar': trainingSit,
+  'senta': trainingSit,
+  'pata': trainingPaw,
+  'dar a pata': trainingPaw,
+  'deitar': trainingSit,
+  'ficar': trainingStay,
+  'fica': trainingStay,
+  'passeio': trainingWalk,
+  'andar': trainingWalk,
+  'caminhar': trainingWalk,
+};
+
+function getTrainingImage(name: string): string | null {
+  const lower = name.toLowerCase();
+  for (const [key, img] of Object.entries(trainingImages)) {
+    if (lower.includes(key)) return img;
+  }
+  return null;
+}
+
 interface Category { id: string; name: string; emoji: string; }
 interface Training {
   id: string; category_id: string; name: string;
@@ -78,6 +105,7 @@ export default function Treinos() {
           {filtered.map((t) => {
             const completed = completedIds.has(t.id);
             const cat = categories.find(c => c.id === t.category_id);
+            const img = getTrainingImage(t.name);
             return (
               <button
                 key={t.id}
@@ -87,7 +115,13 @@ export default function Treinos() {
                 }}
                 className="flex w-full items-center gap-4 rounded-2xl bg-card p-4 text-left shadow-sm transition-transform active:scale-[0.98]"
               >
-                <span className="text-3xl">{cat?.emoji || '🐕'}</span>
+                {img ? (
+                  <img src={img} alt={t.name} className="h-14 w-14 rounded-xl object-cover" />
+                ) : (
+                  <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-accent text-2xl">
+                    {cat?.emoji || '🐕'}
+                  </span>
+                )}
                 <div className="flex-1">
                   <div className="font-bold text-foreground">{t.name}</div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
@@ -110,12 +144,12 @@ export default function Treinos() {
           <DialogHeader>
             <DialogTitle className="text-center text-xl">⭐ Premium</DialogTitle>
             <DialogDescription className="text-center">
-              Desbloqueie todos os treinos e funcionalidades avançadas por apenas
-              <span className="block mt-2 text-2xl font-extrabold text-primary">R$ 14,90/mês</span>
+              Desbloqueie todos os treinos e funcionalidades avançadas!
+              <span className="block mt-2 text-2xl font-extrabold text-primary">A partir de R$ 30/mês</span>
             </DialogDescription>
           </DialogHeader>
-          <Button onClick={() => setPremiumModal(false)} className="rounded-xl">
-            Em breve!
+          <Button onClick={() => { setPremiumModal(false); navigate('/planos'); }} className="rounded-xl">
+            Ver planos
           </Button>
         </DialogContent>
       </Dialog>

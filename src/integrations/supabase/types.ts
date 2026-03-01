@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      breeds: {
+        Row: {
+          created_at: string
+          id: string
+          is_custom: boolean
+          name: string
+          size_category: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          name: string
+          size_category?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          name?: string
+          size_category?: string
+        }
+        Relationships: []
+      }
       pet_achievements: {
         Row: {
           achievement_id: string
@@ -163,6 +187,7 @@ export type Database = {
       pets: {
         Row: {
           age_months: number
+          birth_date: string | null
           breed: string
           created_at: string
           id: string
@@ -174,6 +199,7 @@ export type Database = {
         }
         Insert: {
           age_months?: number
+          birth_date?: string | null
           breed?: string
           created_at?: string
           id?: string
@@ -185,6 +211,7 @@ export type Database = {
         }
         Update: {
           age_months?: number
+          birth_date?: string | null
           breed?: string
           created_at?: string
           id?: string

@@ -1,12 +1,15 @@
+import { useState, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PetProvider, usePet } from "@/hooks/usePet";
+import SplashScreen from "@/components/SplashScreen";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
+import Plans from "./pages/Plans";
 import Home from "./pages/Home";
 import Treinos from "./pages/Treinos";
 import TreinoDetail from "./pages/TreinoDetail";
@@ -34,6 +37,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/planos" element={<Plans />} />
       <Route path="/treinos" element={<Treinos />} />
       <Route path="/treino/:id" element={<TreinoDetail />} />
       <Route path="/saude" element={<Saude />} />
@@ -43,20 +47,26 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <PetProvider>
-            <AppRoutes />
-          </PetProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+        <BrowserRouter>
+          <AuthProvider>
+            <PetProvider>
+              <AppRoutes />
+            </PetProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
