@@ -14,6 +14,7 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 import { Plus, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import { getWeightStatus, getWeightLabel } from '@/lib/weight';
 import { vaccineReminders } from '@/lib/vaccineReminders';
+import { specialAccessories } from '@/lib/accessoryImages';
 
 interface Vaccine {
   id: string; name: string; applied_date: string; next_dose_date: string | null; notes: string | null;
@@ -24,6 +25,7 @@ interface WeightLog {
 interface EquippedItem {
   category: string;
   emoji: string;
+  accessoryId?: string;
 }
 
 export default function Saude() {
@@ -51,19 +53,29 @@ export default function Saude() {
 
     const { data: breed } = await supabase.from('breeds').select('size_category').eq('name', pet.breed).maybeSingle();
     if (breed) setBreedSize(breed.size_category);
-
-    // Fetch equipped items for avatar
-    const { data: avatarData } = await supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id);
-    if (avatarData && avatarData.length > 0) {
-      const itemIds = avatarData.map((d: any) => d.item_id);
-      const { data: itemsData } = await supabase.from('avatar_items').select('category, emoji').in('id', itemIds);
-      if (itemsData) setEquippedItems(itemsData as EquippedItem[]);
-    } else {
-      setEquippedItems([]);
-    }
   };
 
   useEffect(() => { fetchData(); }, [pet]);
+
+  // Load equipped stickers from localStorage (same source as Home & Avatar)
+  useEffect(() => {
+    if (!pet) return;
+    const stored = localStorage.getItem(`avatar_special_${pet.id}`);
+    if (stored) {
+      try {
+        const ids: string[] = JSON.parse(stored);
+        const items = ids
+          .map(id => specialAccessories.find(a => a.id === id))
+          .filter(Boolean)
+          .map(a => ({ category: a!.category, emoji: a!.emoji, accessoryId: a!.id }));
+        setEquippedItems(items);
+      } catch {
+        setEquippedItems([]);
+      }
+    } else {
+      setEquippedItems([]);
+    }
+  }, [pet]);
 
   const openAddVaccine = () => {
     setEditingVaccine(null); setVName(''); setVDate(''); setVNext('');
