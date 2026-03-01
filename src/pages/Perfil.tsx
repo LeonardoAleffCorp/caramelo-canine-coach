@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePet } from '@/hooks/usePet';
 import { getLevel, getLevelEmoji, getLevelProgress } from '@/lib/xp';
+import { getLifeStage } from '@/lib/breedAge';
 import Layout from '@/components/Layout';
 import PetPhotoUpload from '@/components/PetPhotoUpload';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { LogOut } from 'lucide-react';
 import { getBreedDefaultImage } from '@/lib/breedImages';
+import { toast } from 'sonner';
 
 interface Achievement {
   name: string;
@@ -51,6 +53,12 @@ export default function Perfil() {
     await refreshPet();
   };
 
+  const handlePhotoDeleted = async () => {
+    await supabase.from('pets').update({ photo_url: null }).eq('id', pet.id);
+    await refreshPet();
+    toast.success('Foto removida! Voltando ao padrão da raça 🐕');
+  };
+
   const formatAge = () => {
     if (pet.birth_date) {
       const birth = new Date(pet.birth_date);
@@ -65,13 +73,28 @@ export default function Perfil() {
     return `${pet.age_months} meses`;
   };
 
+  const ageMonths = pet.birth_date
+    ? Math.max(1, (new Date().getFullYear() - new Date(pet.birth_date).getFullYear()) * 12 + (new Date().getMonth() - new Date(pet.birth_date).getMonth()))
+    : pet.age_months;
+  const lifeStage = getLifeStage(ageMonths, pet.breed);
+
   return (
     <Layout>
       <div className="px-5 pt-8">
         <div className="flex flex-col items-center text-center">
-          <PetPhotoUpload petId={pet.id} currentUrl={pet.photo_url || getBreedDefaultImage(pet.breed)} onUploaded={handlePhotoUploaded} />
+          <PetPhotoUpload
+            petId={pet.id}
+            currentUrl={pet.photo_url || getBreedDefaultImage(pet.breed)}
+            onUploaded={handlePhotoUploaded}
+            onDeleted={handlePhotoDeleted}
+            showDelete={!!pet.photo_url}
+          />
           <h1 className="mt-3 text-2xl font-extrabold text-foreground">{pet.name}</h1>
           <p className="text-sm text-muted-foreground">{pet.breed} • {formatAge()}</p>
+          <div className={`mt-1 flex items-center gap-1 text-sm font-bold ${lifeStage.color}`}>
+            <span>{lifeStage.emoji}</span>
+            <span>{lifeStage.stage}</span>
+          </div>
         </div>
 
         {/* Stats grid */}

@@ -4,14 +4,15 @@ import { usePet } from '@/hooks/usePet';
 import Layout from '@/components/Layout';
 import PageHeader from '@/components/PageHeader';
 import VaccinePicker from '@/components/VaccinePicker';
+import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Plus, Trash2, Pencil } from 'lucide-react';
-import { getWeightStatus, getWeightImage, getWeightLabel } from '@/lib/weight';
+import { Plus, Trash2, Pencil, AlertTriangle } from 'lucide-react';
+import { getWeightStatus, getWeightLabel } from '@/lib/weight';
 import { vaccineReminders } from '@/lib/vaccineReminders';
 
 interface Vaccine {
@@ -19,6 +20,10 @@ interface Vaccine {
 }
 interface WeightLog {
   id: string; weight_kg: number; recorded_at: string;
+}
+interface EquippedItem {
+  category: string;
+  emoji: string;
 }
 
 export default function Saude() {
@@ -31,8 +36,9 @@ export default function Saude() {
   const [vName, setVName] = useState('');
   const [vDate, setVDate] = useState('');
   const [vNext, setVNext] = useState('');
-  const [newWeight, setNewWeight] = useState('');
+  const [newWeight, setNewWeight] = useState('1');
   const [breedSize, setBreedSize] = useState('médio');
+  const [equippedItems, setEquippedItems] = useState<EquippedItem[]>([]);
 
   const fetchData = async () => {
     if (!pet) return;
@@ -45,6 +51,16 @@ export default function Saude() {
 
     const { data: breed } = await supabase.from('breeds').select('size_category').eq('name', pet.breed).maybeSingle();
     if (breed) setBreedSize(breed.size_category);
+
+    // Fetch equipped items for avatar
+    const { data: avatarData } = await supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id);
+    if (avatarData && avatarData.length > 0) {
+      const itemIds = avatarData.map((d: any) => d.item_id);
+      const { data: itemsData } = await supabase.from('avatar_items').select('category, emoji').in('id', itemIds);
+      if (itemsData) setEquippedItems(itemsData as EquippedItem[]);
+    } else {
+      setEquippedItems([]);
+    }
   };
 
   useEffect(() => { fetchData(); }, [pet]);
@@ -82,10 +98,9 @@ export default function Saude() {
     if (!pet || !newWeight) return;
     const weightVal = parseFloat(newWeight);
     await supabase.from('weight_logs').insert({ pet_id: pet.id, weight_kg: weightVal });
-    // Also update the pet's weight_kg field
     await supabase.from('pets').update({ weight_kg: weightVal }).eq('id', pet.id);
     toast.success('Peso registrado! ⚖️');
-    setShowWeightModal(false); setNewWeight(''); fetchData();
+    setShowWeightModal(false); setNewWeight('1'); fetchData();
   };
 
   const chartData = weights.map(w => ({
@@ -96,7 +111,6 @@ export default function Saude() {
   const currentWeight = weights.length > 0 ? Number(weights[weights.length - 1].weight_kg) : (pet?.weight_kg ? Number(pet.weight_kg) : null);
   const weightStatus = currentWeight ? getWeightStatus(currentWeight, breedSize) : null;
   const weightInfo = weightStatus ? getWeightLabel(weightStatus) : null;
-  const weightImg = weightStatus ? getWeightImage(weightStatus) : null;
 
   return (
     <Layout>
@@ -131,10 +145,20 @@ export default function Saude() {
           </TabsContent>
 
           <TabsContent value="peso" className="mt-4">
-            {weightImg && weightInfo && (
+            {/* Pet avatar with stickers */}
+            {pet && (
+              <div className="mb-4 flex flex-col items-center">
+                <PetAvatarPreview
+                  breed={pet.breed}
+                  equippedItems={equippedItems}
+                  size="md"
+                />
+              </div>
+            )}
+
+            {weightInfo && (
               <div className="mb-4 flex flex-col items-center rounded-2xl bg-card p-4 shadow-sm">
-                <img src={weightImg} alt={weightInfo.label} className="h-28 w-28 rounded-2xl object-cover" />
-                <div className={`mt-2 text-lg font-extrabold ${weightInfo.color}`}>
+                <div className={`text-lg font-extrabold ${weightInfo.color}`}>
                   {weightInfo.emoji} {weightInfo.label}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -142,6 +166,14 @@ export default function Saude() {
                 </div>
               </div>
             )}
+
+            {/* Veterinary disclaimer */}
+            <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                <strong>Aviso:</strong> Este é apenas um diagnóstico prévio baseado no porte da raça. Qualquer mudança na alimentação ou atitude do seu pet deve ser consultada com um médico veterinário. Só faça alterações com prescrição profissional.
+              </p>
+            </div>
 
             <div className="mb-4 flex items-center gap-3">
               <div className="flex-1 rounded-2xl bg-card p-4 shadow-sm text-center">
@@ -215,7 +247,8 @@ export default function Saude() {
         <DialogContent className="rounded-2xl">
           <DialogHeader><DialogTitle>Registrar Peso ⚖️</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input type="number" placeholder="Peso em kg" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)} className="rounded-xl" />
+            <Input type="number" placeholder="Peso em kg" step="0.5" min="1" value={newWeight} onChange={e => setNewWeight(e.target.value)} className="rounded-xl" />
+            <p className="text-[10px] text-muted-foreground">O peso sobe de 0,5 em 0,5 kg, começando em 1 kg.</p>
             <Button onClick={addWeight} disabled={!newWeight} className="w-full rounded-xl">Salvar</Button>
           </div>
         </DialogContent>

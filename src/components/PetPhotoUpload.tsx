@@ -1,16 +1,18 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera } from 'lucide-react';
+import { Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PetPhotoUploadProps {
   petId?: string;
   currentUrl: string | null;
   onUploaded: (url: string) => void;
+  onDeleted?: () => void;
+  showDelete?: boolean;
   size?: 'sm' | 'lg';
 }
 
-export default function PetPhotoUpload({ petId, currentUrl, onUploaded, size = 'lg' }: PetPhotoUploadProps) {
+export default function PetPhotoUpload({ petId, currentUrl, onUploaded, onDeleted, showDelete = false, size = 'lg' }: PetPhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,28 +54,40 @@ export default function PetPhotoUpload({ petId, currentUrl, onUploaded, size = '
   };
 
   return (
-    <button
-      type="button"
-      onClick={() => inputRef.current?.click()}
-      className={`relative ${sizeClass} rounded-full overflow-hidden bg-accent border-2 border-primary/20 transition-transform active:scale-95`}
-      disabled={uploading}
-    >
-      {currentUrl ? (
-        <img src={currentUrl} alt="Pet" className="h-full w-full object-cover" />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-          <Camera className={iconSize} />
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className={`relative ${sizeClass} rounded-full overflow-hidden bg-accent border-2 border-primary/20 transition-transform active:scale-95`}
+        disabled={uploading}
+      >
+        {currentUrl ? (
+          <img src={currentUrl} alt="Pet" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <Camera className={iconSize} />
+          </div>
+        )}
+        <div className={`absolute bottom-0 right-0 ${badgeSize} rounded-full bg-primary flex items-center justify-center`}>
+          <Camera className="h-3 w-3 text-primary-foreground" />
         </div>
+        {uploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+            <span className="text-xs font-bold animate-pulse">...</span>
+          </div>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
+      </button>
+      {showDelete && currentUrl && onDeleted && (
+        <button
+          type="button"
+          onClick={onDeleted}
+          className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md transition-transform active:scale-90"
+          title="Remover foto e voltar ao padrão"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       )}
-      <div className={`absolute bottom-0 right-0 ${badgeSize} rounded-full bg-primary flex items-center justify-center`}>
-        <Camera className="h-3 w-3 text-primary-foreground" />
-      </div>
-      {uploading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/60">
-          <span className="text-xs font-bold animate-pulse">...</span>
-        </div>
-      )}
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
-    </button>
+    </div>
   );
 }

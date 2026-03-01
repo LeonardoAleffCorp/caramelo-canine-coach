@@ -1,11 +1,11 @@
-import { Home, Dumbbell, Heart, User, Palette } from 'lucide-react';
+import { Home, Dumbbell, Heart, User, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/treinos', label: 'Treinos', icon: Dumbbell },
   { path: '/saude', label: 'Saúde', icon: Heart },
-  { path: '/avatar', label: 'Adesivos', icon: Palette },
+  { path: '/avatar', label: 'Avatar', icon: Sparkles },
   { path: '/perfil', label: 'Perfil', icon: User },
 ];
 

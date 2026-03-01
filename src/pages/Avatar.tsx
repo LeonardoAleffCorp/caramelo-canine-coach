@@ -4,10 +4,11 @@ import { usePet } from '@/hooks/usePet';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import PageHeader from '@/components/PageHeader';
+import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { toast } from 'sonner';
-import { getBreedDefaultImage } from '@/lib/breedImages';
 import { getUnlockedStickerCount, getAccountAgeDays } from '@/lib/stickerUnlock';
 import { Lock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AvatarItem {
   id: string;
@@ -76,39 +77,29 @@ export default function Avatar() {
   }));
 
   const equippedItems = items.filter(i => equipped.has(i.id));
-  const equippedByCategory = (cat: string) => equippedItems.find(i => i.category === cat);
-
-  const petImage = pet?.photo_url || (pet ? getBreedDefaultImage(pet.breed) : null);
-  
   const daysToFullUnlock = Math.max(0, 180 - accountAgeDays);
 
   return (
     <Layout>
-      <PageHeader title="Adesivos 🎨" />
+      <PageHeader title="Avatar 🎨" />
       <div className="px-5">
-        {/* Avatar preview */}
-        <div className="relative mx-auto mb-4 flex h-56 w-56 items-center justify-center rounded-3xl bg-gradient-to-b from-accent to-accent/50 shadow-inner">
-          {petImage ? (
-            <img src={petImage} alt={pet?.name} className="h-32 w-32 rounded-full object-cover shadow-lg" />
-          ) : (
-            <span className="text-8xl">🐕</span>
-          )}
+        {/* Description */}
+        <p className="mb-4 text-xs text-muted-foreground text-center leading-relaxed">
+          ✨ Personalize o visual do seu pet com adesivos exclusivos! Novos itens são desbloqueados conforme sua experiência no app.
+        </p>
 
-          {equippedByCategory('hat') && (
-            <span className="absolute top-2 text-4xl animate-bounce-in">{equippedByCategory('hat')!.emoji}</span>
+        {/* Avatar preview with photo side by side */}
+        <div className="flex items-center justify-center gap-4 mb-4">
+          {/* Photo */}
+          {pet?.photo_url && (
+            <img src={pet.photo_url} alt={pet?.name} className="h-20 w-20 rounded-full object-cover border-2 border-primary/20 shadow-lg" />
           )}
-          {equippedByCategory('glasses') && (
-            <span className="absolute top-16 right-10 text-3xl">{equippedByCategory('glasses')!.emoji}</span>
-          )}
-          {equippedByCategory('collar') && (
-            <span className="absolute bottom-14 text-3xl">{equippedByCategory('collar')!.emoji}</span>
-          )}
-          {equippedByCategory('outfit') && (
-            <span className="absolute bottom-6 left-10 text-3xl">{equippedByCategory('outfit')!.emoji}</span>
-          )}
-          {equippedByCategory('accessory') && (
-            <span className="absolute bottom-6 right-10 text-3xl">{equippedByCategory('accessory')!.emoji}</span>
-          )}
+          {/* Avatar drawing */}
+          <PetAvatarPreview
+            breed={pet?.breed || 'Vira-lata/SRD'}
+            equippedItems={equippedItems.map(i => ({ category: i.category, emoji: i.emoji }))}
+            size="lg"
+          />
         </div>
 
         <p className="text-center text-lg font-extrabold text-foreground">{pet?.name}</p>
@@ -145,35 +136,54 @@ export default function Avatar() {
         </div>
 
         {/* Items grid */}
-        <div className="mt-3 grid grid-cols-3 gap-3 pb-4">
-          {filteredItems.map((item) => {
-            const isEquipped = equipped.has(item.id);
-            const isLocked = !item.unlocked;
-            return (
-              <button
-                key={item.id}
-                onClick={() => !isLocked && toggleItem(item.id)}
-                disabled={isLocked}
-                className={`relative flex flex-col items-center gap-1 rounded-2xl p-4 transition-all active:scale-95 ${
-                  isLocked
-                    ? 'bg-muted/50 opacity-60 cursor-not-allowed'
-                    : isEquipped
-                    ? 'bg-primary/10 border-2 border-primary shadow-md'
-                    : 'bg-card border border-border shadow-sm'
-                }`}
-              >
-                {isLocked && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/40">
-                    <Lock className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                <span className="text-3xl">{item.emoji}</span>
-                <span className="text-[10px] font-bold text-foreground text-center leading-tight">{item.name}</span>
-                {isEquipped && <span className="text-[10px] text-primary font-bold">Aplicado ✓</span>}
-              </button>
-            );
-          })}
-        </div>
+        <TooltipProvider>
+          <div className="mt-3 grid grid-cols-3 gap-3 pb-4">
+            {filteredItems.map((item) => {
+              const isEquipped = equipped.has(item.id);
+              const isLocked = !item.unlocked;
+              
+              const itemButton = (
+                <button
+                  key={item.id}
+                  onClick={() => !isLocked && toggleItem(item.id)}
+                  disabled={isLocked}
+                  className={`relative flex flex-col items-center gap-1 rounded-2xl p-4 transition-all active:scale-95 ${
+                    isLocked
+                      ? 'bg-muted/50 opacity-60 cursor-not-allowed'
+                      : isEquipped
+                      ? 'bg-primary/10 border-2 border-primary shadow-md'
+                      : 'bg-card border border-border shadow-sm'
+                  }`}
+                >
+                  {isLocked && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/40">
+                      <Lock className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="text-3xl">{item.emoji}</span>
+                  <span className="text-[10px] font-bold text-foreground text-center leading-tight">{item.name}</span>
+                  {isEquipped && <span className="text-[10px] text-primary font-bold">Aplicado ✓</span>}
+                </button>
+              );
+
+              if (isLocked) {
+                return (
+                  <Tooltip key={item.id}>
+                    <TooltipTrigger asChild>
+                      {itemButton}
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[200px] text-center">
+                      <p className="text-xs font-semibold">🔒 Exclusivo para assinantes!</p>
+                      <p className="text-[10px] text-muted-foreground">Faça upgrade para desbloquear todos os adesivos.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return itemButton;
+            })}
+          </div>
+        </TooltipProvider>
       </div>
     </Layout>
   );

@@ -89,7 +89,7 @@ export default function CadastrarPet() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground">Peso (kg)</label>
-            <Input type="number" placeholder="10" value={weightKg} onChange={e => setWeightKg(e.target.value)} step="0.1" min="0.5" max="100" className="h-12 rounded-xl bg-card text-base" />
+            <Input type="number" placeholder="1" value={weightKg} onChange={e => setWeightKg(e.target.value)} step="0.5" min="1" max="100" className="h-12 rounded-xl bg-card text-base" />
           </div>
           <Button type="submit" disabled={loading || !name} className="mt-6 h-14 w-full rounded-2xl text-lg font-bold">
             {loading ? '...' : 'Cadastrar! 🎯'}

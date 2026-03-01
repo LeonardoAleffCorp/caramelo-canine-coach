@@ -6,12 +6,18 @@ import { getLevel, getLevelEmoji, getLevelProgress, getNextLevelXp } from '@/lib
 import { useSubscription } from '@/hooks/useSubscription';
 import Layout from '@/components/Layout';
 import PetSwitcher from '@/components/PetSwitcher';
+import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { Progress } from '@/components/ui/progress';
 import { getBreedDefaultImage } from '@/lib/breedImages';
 
 interface Category {
   id: string;
   name: string;
+  emoji: string;
+}
+
+interface EquippedItem {
+  category: string;
   emoji: string;
 }
 
@@ -40,12 +46,25 @@ export default function Home() {
   const { daysLeft, isTrial } = useSubscription();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [equippedItems, setEquippedItems] = useState<EquippedItem[]>([]);
 
   useEffect(() => {
     supabase.from('training_categories').select('*').order('sort_order').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, []);
+
+  useEffect(() => {
+    if (!pet) return;
+    const fetchEquipped = async () => {
+      const { data: avatarData } = await supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id);
+      if (!avatarData || avatarData.length === 0) { setEquippedItems([]); return; }
+      const itemIds = avatarData.map((d: any) => d.item_id);
+      const { data: itemsData } = await supabase.from('avatar_items').select('category, emoji').in('id', itemIds);
+      if (itemsData) setEquippedItems(itemsData as EquippedItem[]);
+    };
+    fetchEquipped();
+  }, [pet]);
 
   if (!pet || !stats) return null;
 
@@ -123,6 +142,16 @@ export default function Home() {
               <span className="text-xs font-semibold text-foreground text-center leading-tight">{cat.name}</span>
             </button>
           ))}
+        </div>
+
+        {/* Pet Avatar with stickers */}
+        <div className="mt-4 mb-8 flex flex-col items-center">
+          <PetAvatarPreview
+            breed={pet.breed}
+            equippedItems={equippedItems}
+            size="lg"
+          />
+          <p className="mt-2 text-xs text-muted-foreground">Seu avatar com adesivos ✨</p>
         </div>
       </div>
     </Layout>
