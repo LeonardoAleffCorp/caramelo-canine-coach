@@ -8,6 +8,7 @@ import PetPhotoUpload from '@/components/PetPhotoUpload';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { LogOut } from 'lucide-react';
+import { getBreedDefaultImage } from '@/lib/breedImages';
 
 interface Achievement {
   name: string;
@@ -68,7 +69,7 @@ export default function Perfil() {
     <Layout>
       <div className="px-5 pt-8">
         <div className="flex flex-col items-center text-center">
-          <PetPhotoUpload petId={pet.id} currentUrl={pet.photo_url} onUploaded={handlePhotoUploaded} />
+          <PetPhotoUpload petId={pet.id} currentUrl={pet.photo_url || getBreedDefaultImage(pet.breed)} onUploaded={handlePhotoUploaded} />
           <h1 className="mt-3 text-2xl font-extrabold text-foreground">{pet.name}</h1>
           <p className="text-sm text-muted-foreground">{pet.breed} • {formatAge()}</p>
         </div>

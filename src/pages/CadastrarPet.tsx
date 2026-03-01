@@ -51,6 +51,14 @@ export default function CadastrarPet() {
         pet_id: pet.id, xp: 0, level: 'Filhote', current_streak: 0, longest_streak: 0,
       });
 
+      // Save initial weight to weight_logs if provided
+      if (weightKg) {
+        await supabase.from('weight_logs').insert({
+          pet_id: pet.id,
+          weight_kg: parseFloat(weightKg),
+        });
+      }
+
       await refreshPet();
       toast.success(`${name} cadastrado! 🎉`);
       navigate('/');
