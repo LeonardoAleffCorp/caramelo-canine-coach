@@ -1,4 +1,5 @@
 import { getBreedBodyImage } from '@/lib/breedBodyImages';
+import { getBreedWeightImage } from '@/lib/breedWeightImages';
 import { getAccessoryById, accessoryPositions } from '@/lib/accessoryImages';
 
 interface EquippedItem {
@@ -12,6 +13,7 @@ interface PetAvatarPreviewProps {
   equippedItems: EquippedItem[];
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  weightStatus?: 'underweight' | 'healthy' | 'overweight' | 'obese';
 }
 
 const sizeConfig = {
@@ -20,9 +22,9 @@ const sizeConfig = {
   lg: { container: 'h-64 w-64', img: 'h-56 w-56' },
 };
 
-export default function PetAvatarPreview({ breed, equippedItems, size = 'lg', className = '' }: PetAvatarPreviewProps) {
+export default function PetAvatarPreview({ breed, equippedItems, size = 'lg', className = '', weightStatus }: PetAvatarPreviewProps) {
   const config = sizeConfig[size];
-  const bodyImg = getBreedBodyImage(breed);
+  const bodyImg = weightStatus ? getBreedWeightImage(breed, weightStatus) : getBreedBodyImage(breed);
 
   // Get unique equipped accessories with images
   const equippedAccessories = equippedItems

@@ -152,6 +152,7 @@ export default function Saude() {
                   breed={pet.breed}
                   equippedItems={equippedItems}
                   size="md"
+                  weightStatus={weightStatus}
                 />
               </div>
             )}
