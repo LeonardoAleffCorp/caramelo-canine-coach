@@ -6,122 +6,90 @@ import Layout from '@/components/Layout';
 import PageHeader from '@/components/PageHeader';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { toast } from 'sonner';
-import { getUnlockedStickerCount, getAccountAgeDays } from '@/lib/stickerUnlock';
-import { Lock } from 'lucide-react';
+import { specialAccessories, getAccessoriesByCategory, type AccessoryDef } from '@/lib/accessoryImages';
+import { Lock, Sparkles } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-interface AvatarItem {
-  id: string;
-  name: string;
-  category: string;
-  emoji: string;
-  color: string;
-  is_premium: boolean;
-  sort_order: number;
-}
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const categoryLabels: Record<string, { label: string; emoji: string }> = {
   hat: { label: 'Chapéus', emoji: '🎩' },
   glasses: { label: 'Óculos', emoji: '🕶️' },
-  collar: { label: 'Coleiras', emoji: '📿' },
-  outfit: { label: 'Roupas', emoji: '👕' },
-  accessory: { label: 'Acessórios', emoji: '✨' },
+  collar: { label: 'Colares', emoji: '📿' },
 };
 
 export default function Avatar() {
   const { pet } = usePet();
   const { user } = useAuth();
-  const [items, setItems] = useState<AvatarItem[]>([]);
   const [equipped, setEquipped] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState('hat');
-  const [accountAgeDays, setAccountAgeDays] = useState(0);
 
-  useEffect(() => {
-    supabase.from('avatar_items').select('*').order('sort_order').then(({ data }) => {
-      if (data) setItems(data as AvatarItem[]);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (user?.created_at) {
-      setAccountAgeDays(getAccountAgeDays(user.created_at));
-    }
-  }, [user]);
-
+  // Load equipped special accessories from localStorage
   useEffect(() => {
     if (!pet) return;
-    supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id).then(({ data }) => {
-      if (data) setEquipped(new Set(data.map((d: any) => d.item_id)));
-    });
+    const stored = localStorage.getItem(`avatar_special_${pet.id}`);
+    if (stored) {
+      try {
+        setEquipped(new Set(JSON.parse(stored)));
+      } catch { /* ignore */ }
+    }
   }, [pet]);
 
-  const toggleItem = async (itemId: string) => {
+  const saveEquipped = (newSet: Set<string>) => {
     if (!pet) return;
-    if (equipped.has(itemId)) {
-      await supabase.from('pet_avatar').delete().eq('pet_id', pet.id).eq('item_id', itemId);
-      setEquipped(prev => { const n = new Set(prev); n.delete(itemId); return n; });
-      toast.success('Adesivo removido!');
-    } else {
-      await supabase.from('pet_avatar').insert({ pet_id: pet.id, item_id: itemId });
-      setEquipped(prev => new Set(prev).add(itemId));
-      toast.success('Adesivo aplicado! 🎉');
-    }
+    setEquipped(newSet);
+    localStorage.setItem(`avatar_special_${pet.id}`, JSON.stringify([...newSet]));
   };
 
-  const categoryItems = items.filter(i => i.category === selectedCategory);
-  const unlockedCount = getUnlockedStickerCount(categoryItems.length, accountAgeDays);
-  
-  const filteredItems = categoryItems.map((item, index) => ({
-    ...item,
-    unlocked: index < unlockedCount,
-  }));
+  const toggleItem = (accessory: AccessoryDef) => {
+    if (!pet) return;
 
-  const equippedItems = items.filter(i => equipped.has(i.id));
-  const daysToFullUnlock = Math.max(0, 180 - accountAgeDays);
+    // Only allow one item per category
+    const newEquipped = new Set(equipped);
+    const currentInCategory = [...newEquipped].find(id => {
+      const acc = specialAccessories.find(a => a.id === id);
+      return acc?.category === accessory.category;
+    });
+
+    if (currentInCategory === accessory.id) {
+      // Unequip
+      newEquipped.delete(accessory.id);
+      toast.success('Acessório removido!');
+    } else {
+      // Remove existing in same category, equip new
+      if (currentInCategory) newEquipped.delete(currentInCategory);
+      newEquipped.add(accessory.id);
+      toast.success('Acessório aplicado! 🎉');
+    }
+
+    saveEquipped(newEquipped);
+  };
+
+  const categoryItems = getAccessoriesByCategory(selectedCategory);
+
+  const equippedItems = specialAccessories
+    .filter(a => equipped.has(a.id))
+    .map(a => ({ category: a.category, emoji: a.emoji, accessoryId: a.id }));
 
   return (
     <Layout>
       <PageHeader title="Avatar 🎨" />
       <div className="px-5">
-        {/* Description */}
         <p className="mb-4 text-xs text-muted-foreground text-center leading-relaxed">
-          ✨ Personalize o visual do seu pet com adesivos exclusivos! Novos itens são desbloqueados conforme sua experiência no app.
+          ✨ Personalize o visual do seu pet com acessórios especiais que mudam o desenho!
         </p>
 
-        {/* Avatar preview with photo side by side */}
-        <div className="flex items-center justify-center gap-4 mb-4">
-          {/* Photo */}
-          {pet?.photo_url && (
-            <img src={pet.photo_url} alt={pet?.name} className="h-20 w-20 rounded-full object-cover border-2 border-primary/20 shadow-lg" />
-          )}
-          {/* Avatar drawing */}
+        {/* Avatar preview */}
+        <div className="flex flex-col items-center mb-4">
           <PetAvatarPreview
             breed={pet?.breed || 'Vira-lata/SRD'}
-            equippedItems={equippedItems.map(i => ({ category: i.category, emoji: i.emoji }))}
+            equippedItems={equippedItems}
             size="lg"
           />
+          <p className="mt-2 text-lg font-extrabold text-foreground">{pet?.name}</p>
         </div>
 
-        <p className="text-center text-lg font-extrabold text-foreground">{pet?.name}</p>
-        
-        {/* Unlock progress */}
-        {daysToFullUnlock > 0 && (
-          <div className="mt-2 mb-4 rounded-xl bg-muted/50 px-3 py-2 text-center">
-            <p className="text-[11px] text-muted-foreground">
-              🔓 Novos adesivos desbloqueiam com o tempo!
-              {daysToFullUnlock > 0 && ` Faltam ${daysToFullUnlock} dias para liberar todos.`}
-            </p>
-            <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
-              <div 
-                className="h-full rounded-full bg-primary transition-all" 
-                style={{ width: `${Math.min(100, (accountAgeDays / 180) * 100)}%` }} 
-              />
-            </div>
-          </div>
-        )}
-
         {/* Category tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none mt-3">
+        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
           {Object.entries(categoryLabels).map(([key, val]) => (
             <button
               key={key}
@@ -138,16 +106,16 @@ export default function Avatar() {
         {/* Items grid */}
         <TooltipProvider>
           <div className="mt-3 grid grid-cols-3 gap-3 pb-4">
-            {filteredItems.map((item) => {
+            {categoryItems.map((item) => {
               const isEquipped = equipped.has(item.id);
-              const isLocked = !item.unlocked;
-              
+              const isLocked = item.is_premium;
+
               const itemButton = (
                 <button
                   key={item.id}
-                  onClick={() => !isLocked && toggleItem(item.id)}
+                  onClick={() => !isLocked && toggleItem(item)}
                   disabled={isLocked}
-                  className={`relative flex flex-col items-center gap-1 rounded-2xl p-4 transition-all active:scale-95 ${
+                  className={`relative flex flex-col items-center gap-1 rounded-2xl p-3 transition-all active:scale-95 ${
                     isLocked
                       ? 'bg-muted/50 opacity-60 cursor-not-allowed'
                       : isEquipped
@@ -156,11 +124,15 @@ export default function Avatar() {
                   }`}
                 >
                   {isLocked && (
-                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/40">
+                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/40 z-10">
                       <Lock className="h-5 w-5 text-muted-foreground" />
                     </div>
                   )}
-                  <span className="text-3xl">{item.emoji}</span>
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-16 w-16 object-contain"
+                  />
                   <span className="text-[10px] font-bold text-foreground text-center leading-tight">{item.name}</span>
                   {isEquipped && <span className="text-[10px] text-primary font-bold">Aplicado ✓</span>}
                 </button>
@@ -173,8 +145,8 @@ export default function Avatar() {
                       {itemButton}
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[200px] text-center">
-                      <p className="text-xs font-semibold">🔒 Exclusivo para assinantes!</p>
-                      <p className="text-[10px] text-muted-foreground">Faça upgrade para desbloquear todos os adesivos.</p>
+                      <p className="text-xs font-semibold">🔒 Premium</p>
+                      <p className="text-[10px] text-muted-foreground">Faça upgrade para desbloquear.</p>
                     </TooltipContent>
                   </Tooltip>
                 );

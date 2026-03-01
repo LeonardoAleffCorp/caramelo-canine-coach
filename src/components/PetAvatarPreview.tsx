@@ -1,8 +1,10 @@
-import { getBreedDefaultImage } from '@/lib/breedImages';
+import { getBreedBodyImage } from '@/lib/breedBodyImages';
+import { getAccessoryById, accessoryPositions } from '@/lib/accessoryImages';
 
 interface EquippedItem {
   category: string;
   emoji: string;
+  accessoryId?: string;
 }
 
 interface PetAvatarPreviewProps {
@@ -13,35 +15,65 @@ interface PetAvatarPreviewProps {
 }
 
 const sizeConfig = {
-  sm: { container: 'h-24 w-24', img: 'h-16 w-16', emoji: 'text-xl', positions: { hat: '-top-1', glasses: 'top-5 right-2', collar: 'bottom-4', outfit: 'bottom-1 left-2', accessory: 'bottom-1 right-2' } },
-  md: { container: 'h-40 w-40', img: 'h-24 w-24', emoji: 'text-2xl', positions: { hat: 'top-0', glasses: 'top-10 right-5', collar: 'bottom-8', outfit: 'bottom-3 left-4', accessory: 'bottom-3 right-4' } },
-  lg: { container: 'h-56 w-56', img: 'h-32 w-32', emoji: 'text-4xl', positions: { hat: 'top-2', glasses: 'top-16 right-10', collar: 'bottom-14', outfit: 'bottom-6 left-10', accessory: 'bottom-6 right-10' } },
+  sm: { container: 'h-28 w-28', img: 'h-24 w-24' },
+  md: { container: 'h-44 w-44', img: 'h-40 w-40' },
+  lg: { container: 'h-64 w-64', img: 'h-56 w-56' },
 };
 
 export default function PetAvatarPreview({ breed, equippedItems, size = 'lg', className = '' }: PetAvatarPreviewProps) {
   const config = sizeConfig[size];
-  const breedImg = getBreedDefaultImage(breed);
-  const byCategory = (cat: string) => equippedItems.find(i => i.category === cat);
+  const bodyImg = getBreedBodyImage(breed);
+
+  // Get unique equipped accessories with images
+  const equippedAccessories = equippedItems
+    .filter(item => item.accessoryId)
+    .map(item => {
+      const def = getAccessoryById(item.accessoryId!);
+      return def ? { ...def, position: accessoryPositions[def.category] } : null;
+    })
+    .filter(Boolean);
 
   return (
     <div className={`relative flex items-center justify-center rounded-3xl bg-gradient-to-b from-accent to-accent/50 shadow-inner ${config.container} ${className}`}>
-      <img src={breedImg} alt="Avatar" className={`${config.img} rounded-full object-cover shadow-lg`} />
+      {/* Base breed body image */}
+      <img
+        src={bodyImg}
+        alt="Avatar"
+        className={`${config.img} rounded-2xl object-contain`}
+      />
 
-      {byCategory('hat') && (
-        <span className={`absolute ${config.positions.hat} ${config.emoji} animate-bounce-in`}>{byCategory('hat')!.emoji}</span>
-      )}
-      {byCategory('glasses') && (
-        <span className={`absolute ${config.positions.glasses} ${config.emoji}`}>{byCategory('glasses')!.emoji}</span>
-      )}
-      {byCategory('collar') && (
-        <span className={`absolute ${config.positions.collar} ${config.emoji}`}>{byCategory('collar')!.emoji}</span>
-      )}
-      {byCategory('outfit') && (
-        <span className={`absolute ${config.positions.outfit} ${config.emoji}`}>{byCategory('outfit')!.emoji}</span>
-      )}
-      {byCategory('accessory') && (
-        <span className={`absolute ${config.positions.accessory} ${config.emoji}`}>{byCategory('accessory')!.emoji}</span>
-      )}
+      {/* Accessory overlays */}
+      {equippedAccessories.map((acc) => (
+        <img
+          key={acc!.id}
+          src={acc!.image}
+          alt={acc!.name}
+          className="absolute pointer-events-none"
+          style={{
+            top: acc!.position.top,
+            left: acc!.position.left,
+            width: acc!.position.width,
+            objectFit: 'contain',
+            zIndex: acc!.category === 'hat' ? 10 : acc!.category === 'glasses' ? 20 : 5,
+          }}
+        />
+      ))}
+
+      {/* Fallback emoji overlays for non-special accessories */}
+      {equippedItems
+        .filter(item => !item.accessoryId)
+        .map((item, i) => (
+          <span
+            key={`emoji-${i}`}
+            className="absolute text-2xl"
+            style={{
+              top: item.category === 'hat' ? '0' : item.category === 'glasses' ? '30%' : '65%',
+              zIndex: 30,
+            }}
+          >
+            {item.emoji}
+          </span>
+        ))}
     </div>
   );
 }
