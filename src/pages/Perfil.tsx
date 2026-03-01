@@ -100,8 +100,14 @@ export default function Perfil() {
         {/* Stats grid */}
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-accent p-4 text-center">
-            <div className="text-2xl">{levelEmoji}</div>
-            <div className="mt-1 text-sm font-bold text-foreground">{level}</div>
+            {pet.photo_url ? (
+              <div className="text-2xl">{levelEmoji}</div>
+            ) : (
+              <div className="flex justify-center mb-1">
+                <img src={getBreedDefaultImage(pet.breed)} alt="Avatar" className="h-12 w-12 object-contain" />
+              </div>
+            )}
+            <div className="mt-1 text-sm font-bold text-foreground">{lifeStage.stage}</div>
             <Progress value={progress} className="mt-2 h-1.5" />
           </div>
           <div className="rounded-2xl bg-verde-light p-4 text-center">
