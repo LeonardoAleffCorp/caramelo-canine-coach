@@ -15,6 +15,7 @@ import Treinos from "./pages/Treinos";
 import TreinoDetail from "./pages/TreinoDetail";
 import Saude from "./pages/Saude";
 import Perfil from "./pages/Perfil";
+import CadastrarPet from "./pages/CadastrarPet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ function AppRoutes() {
       <Route path="/treino/:id" element={<TreinoDetail />} />
       <Route path="/saude" element={<Saude />} />
       <Route path="/perfil" element={<Perfil />} />
+      <Route path="/cadastrar-pet" element={<CadastrarPet />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

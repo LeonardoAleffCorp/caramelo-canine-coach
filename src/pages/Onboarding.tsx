@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import BreedPicker from '@/components/BreedPicker';
+import PetPhotoUpload from '@/components/PetPhotoUpload';
 
 import onboardingPlayImg from '@/assets/onboarding-play.png';
 import onboardingVaccineImg from '@/assets/onboarding-vaccine.png';
@@ -47,6 +48,7 @@ export default function Onboarding() {
   const [breed, setBreed] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [weightKg, setWeightKg] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const computeAgeMonths = useCallback((dateStr: string) => {
@@ -70,6 +72,7 @@ export default function Onboarding() {
         age_months: ageMonths,
         birth_date: birthDate || null,
         weight_kg: weightKg ? parseFloat(weightKg) : null,
+        photo_url: photoUrl,
       }).select().single();
       if (error) throw error;
 
@@ -183,11 +186,9 @@ export default function Onboarding() {
       <button onClick={() => setStep(3)} className="mb-4 text-sm font-medium text-primary">
         ← Voltar
       </button>
-      <div className="mb-6 text-center">
-        <div className="mb-3 text-5xl animate-bounce-in">
-          {petAge === 'filhote' ? '🐶' : '🐕'}
-        </div>
-        <h1 className="text-2xl font-extrabold text-foreground">Cadastre seu cão</h1>
+      <div className="mb-6 flex flex-col items-center text-center">
+        <PetPhotoUpload petId="onboarding" currentUrl={photoUrl} onUploaded={setPhotoUrl} />
+        <h1 className="mt-3 text-2xl font-extrabold text-foreground">Cadastre seu cão</h1>
         <p className="mt-1 text-sm text-muted-foreground">Vamos conhecer seu melhor amigo!</p>
       </div>
 

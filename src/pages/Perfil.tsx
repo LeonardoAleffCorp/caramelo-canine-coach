@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePet } from '@/hooks/usePet';
-import { getLevel, getLevelEmoji, getLevelProgress, getNextLevelXp } from '@/lib/xp';
+import { getLevel, getLevelEmoji, getLevelProgress } from '@/lib/xp';
 import Layout from '@/components/Layout';
+import PetPhotoUpload from '@/components/PetPhotoUpload';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 interface Achievement {
   name: string;
@@ -17,13 +18,12 @@ interface Achievement {
 
 export default function Perfil() {
   const { signOut } = useAuth();
-  const { pet, stats } = usePet();
+  const { pet, stats, refreshPet } = usePet();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
 
   useEffect(() => {
     if (!pet) return;
-    // Get achievements
     const fetchAchievements = async () => {
       const [{ data: all }, { data: unlocked }, { data: trainings }] = await Promise.all([
         supabase.from('achievements').select('*'),
@@ -32,10 +32,7 @@ export default function Perfil() {
       ]);
       const unlockedIds = new Set((unlocked || []).map((u: any) => u.achievement_id));
       setAchievements((all || []).map((a: any) => ({
-        name: a.name,
-        emoji: a.emoji,
-        description: a.description,
-        unlocked: unlockedIds.has(a.id),
+        name: a.name, emoji: a.emoji, description: a.description, unlocked: unlockedIds.has(a.id),
       })));
       setCompletedCount(trainings?.length || 0);
     };
@@ -48,16 +45,32 @@ export default function Perfil() {
   const levelEmoji = getLevelEmoji(level);
   const progress = getLevelProgress(stats.xp);
 
+  const handlePhotoUploaded = async (url: string) => {
+    await supabase.from('pets').update({ photo_url: url }).eq('id', pet.id);
+    await refreshPet();
+  };
+
+  const formatAge = () => {
+    if (pet.birth_date) {
+      const birth = new Date(pet.birth_date);
+      const now = new Date();
+      const m = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+      const y = Math.floor(m / 12);
+      const rm = m % 12;
+      if (y > 0 && rm > 0) return `${y}a ${rm}m`;
+      if (y > 0) return `${y} ano${y > 1 ? 's' : ''}`;
+      return `${m} mes${m !== 1 ? 'es' : ''}`;
+    }
+    return `${pet.age_months} meses`;
+  };
+
   return (
     <Layout>
       <div className="px-5 pt-8">
-        {/* Profile header */}
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-accent text-5xl">
-            🐕
-          </div>
+          <PetPhotoUpload petId={pet.id} currentUrl={pet.photo_url} onUploaded={handlePhotoUploaded} />
           <h1 className="mt-3 text-2xl font-extrabold text-foreground">{pet.name}</h1>
-          <p className="text-sm text-muted-foreground">{pet.breed} • {pet.age_months} meses</p>
+          <p className="text-sm text-muted-foreground">{pet.breed} • {formatAge()}</p>
         </div>
 
         {/* Stats grid */}
@@ -85,12 +98,7 @@ export default function Perfil() {
         <h2 className="mb-3 mt-8 text-lg font-bold text-foreground">Conquistas 🏅</h2>
         <div className="space-y-2 pb-4">
           {achievements.map((a) => (
-            <div
-              key={a.name}
-              className={`flex items-center gap-3 rounded-2xl p-4 ${
-                a.unlocked ? 'bg-accent' : 'bg-muted opacity-50'
-              }`}
-            >
+            <div key={a.name} className={`flex items-center gap-3 rounded-2xl p-4 ${a.unlocked ? 'bg-accent' : 'bg-muted opacity-50'}`}>
               <span className="text-2xl">{a.emoji}</span>
               <div>
                 <div className="font-bold text-foreground">{a.name}</div>
@@ -101,13 +109,8 @@ export default function Perfil() {
           ))}
         </div>
 
-        {/* Actions */}
         <div className="mt-4 pb-8">
-          <Button
-            variant="outline"
-            onClick={signOut}
-            className="w-full rounded-xl"
-          >
+          <Button variant="outline" onClick={signOut} className="w-full rounded-xl">
             <LogOut className="mr-2 h-4 w-4" /> Sair
           </Button>
         </div>

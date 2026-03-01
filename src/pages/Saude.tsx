@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePet } from '@/hooks/usePet';
 import Layout from '@/components/Layout';
+import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -43,15 +44,9 @@ export default function Saude() {
 
   const addVaccine = async () => {
     if (!pet || !vName || !vDate) return;
-    await supabase.from('vaccines').insert({
-      pet_id: pet.id,
-      name: vName,
-      applied_date: vDate,
-      next_dose_date: vNext || null,
-    });
+    await supabase.from('vaccines').insert({ pet_id: pet.id, name: vName, applied_date: vDate, next_dose_date: vNext || null });
     toast.success('Vacina registrada! 💉');
-    setShowVaccineModal(false);
-    setVName(''); setVDate(''); setVNext('');
+    setShowVaccineModal(false); setVName(''); setVDate(''); setVNext('');
     fetchData();
   };
 
@@ -63,13 +58,9 @@ export default function Saude() {
 
   const addWeight = async () => {
     if (!pet || !newWeight) return;
-    await supabase.from('weight_logs').insert({
-      pet_id: pet.id,
-      weight_kg: parseFloat(newWeight),
-    });
+    await supabase.from('weight_logs').insert({ pet_id: pet.id, weight_kg: parseFloat(newWeight) });
     toast.success('Peso registrado! ⚖️');
-    setShowWeightModal(false);
-    setNewWeight('');
+    setShowWeightModal(false); setNewWeight('');
     fetchData();
   };
 
@@ -80,10 +71,9 @@ export default function Saude() {
 
   return (
     <Layout>
-      <div className="px-5 pt-8">
-        <h1 className="text-2xl font-extrabold text-foreground">Saúde 🏥</h1>
-
-        <Tabs defaultValue="vacinas" className="mt-6">
+      <PageHeader title="Saúde 🏥" />
+      <div className="px-5">
+        <Tabs defaultValue="vacinas" className="mt-2">
           <TabsList className="w-full rounded-xl bg-muted">
             <TabsTrigger value="vacinas" className="flex-1 rounded-lg text-xs font-bold">💉 Vacinas</TabsTrigger>
             <TabsTrigger value="peso" className="flex-1 rounded-lg text-xs font-bold">⚖️ Peso</TabsTrigger>
@@ -100,23 +90,13 @@ export default function Saude() {
                   <span className="text-2xl">💉</span>
                   <div className="flex-1">
                     <div className="font-bold text-foreground">{v.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Aplicada: {new Date(v.applied_date).toLocaleDateString('pt-BR')}
-                    </div>
-                    {v.next_dose_date && (
-                      <div className="text-xs text-secondary">
-                        Próxima: {new Date(v.next_dose_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground">Aplicada: {new Date(v.applied_date).toLocaleDateString('pt-BR')}</div>
+                    {v.next_dose_date && <div className="text-xs text-secondary">Próxima: {new Date(v.next_dose_date).toLocaleDateString('pt-BR')}</div>}
                   </div>
-                  <button onClick={() => deleteVaccine(v.id)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <button onClick={() => deleteVaccine(v.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                 </div>
               ))}
-              {vaccines.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-8">Nenhuma vacina registrada</p>
-              )}
+              {vaccines.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhuma vacina registrada</p>}
             </div>
           </TabsContent>
 
@@ -128,9 +108,7 @@ export default function Saude() {
                   {weights.length > 0 ? `${weights[weights.length - 1].weight_kg} kg` : '—'}
                 </div>
               </div>
-              <Button onClick={() => setShowWeightModal(true)} size="icon" className="h-12 w-12 rounded-xl">
-                <Plus className="h-5 w-5" />
-              </Button>
+              <Button onClick={() => setShowWeightModal(true)} size="icon" className="h-12 w-12 rounded-xl"><Plus className="h-5 w-5" /></Button>
             </div>
             {chartData.length > 1 && (
               <div className="h-48 rounded-2xl bg-card p-4 shadow-sm">
@@ -166,7 +144,6 @@ export default function Saude() {
         </Tabs>
       </div>
 
-      {/* Add vaccine modal */}
       <Dialog open={showVaccineModal} onOpenChange={setShowVaccineModal}>
         <DialogContent className="rounded-2xl">
           <DialogHeader><DialogTitle>Adicionar Vacina 💉</DialogTitle></DialogHeader>
@@ -185,19 +162,11 @@ export default function Saude() {
         </DialogContent>
       </Dialog>
 
-      {/* Add weight modal */}
       <Dialog open={showWeightModal} onOpenChange={setShowWeightModal}>
         <DialogContent className="rounded-2xl">
           <DialogHeader><DialogTitle>Registrar Peso ⚖️</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input
-              type="number"
-              placeholder="Peso em kg"
-              step="0.1"
-              value={newWeight}
-              onChange={e => setNewWeight(e.target.value)}
-              className="rounded-xl"
-            />
+            <Input type="number" placeholder="Peso em kg" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)} className="rounded-xl" />
             <Button onClick={addWeight} disabled={!newWeight} className="w-full rounded-xl">Salvar</Button>
           </div>
         </DialogContent>
