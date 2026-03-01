@@ -12,6 +12,26 @@ interface Category {
   emoji: string;
 }
 
+function formatAge(ageMonths: number, birthDate?: string | null): string {
+  if (birthDate) {
+    const birth = new Date(birthDate);
+    const now = new Date();
+    const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    if (years > 0 && months > 0) return `${years}a ${months}m`;
+    if (years > 0) return `${years} ano${years > 1 ? 's' : ''}`;
+    return `${months} mes${months !== 1 ? 'es' : ''}`;
+  }
+  if (ageMonths >= 12) {
+    const y = Math.floor(ageMonths / 12);
+    const m = ageMonths % 12;
+    if (m > 0) return `${y}a ${m}m`;
+    return `${y} ano${y > 1 ? 's' : ''}`;
+  }
+  return `${ageMonths} mes${ageMonths !== 1 ? 'es' : ''}`;
+}
+
 export default function Home() {
   const { pet, stats } = usePet();
   const navigate = useNavigate();
@@ -29,6 +49,7 @@ export default function Home() {
   const levelEmoji = getLevelEmoji(level);
   const progress = getLevelProgress(stats.xp);
   const nextXp = getNextLevelXp(stats.xp);
+  const ageDisplay = formatAge(pet.age_months, (pet as any).birth_date);
 
   return (
     <Layout>
@@ -37,7 +58,7 @@ export default function Home() {
         <h1 className="text-2xl font-extrabold text-foreground">
           Olá, {pet.name}! 🐕
         </h1>
-        <p className="text-sm text-muted-foreground">{pet.breed} • {pet.age_months} meses</p>
+        <p className="text-sm text-muted-foreground">{pet.breed} • {ageDisplay}</p>
 
         {/* Streak + XP Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3">

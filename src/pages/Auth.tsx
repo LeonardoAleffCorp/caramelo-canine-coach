@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import mascotImg from '@/assets/caramelo-mascot.png';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,14 +32,22 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      <div className="mb-8 text-center">
-        <div className="mb-4 text-7xl animate-bounce-in">🐕</div>
-        <h1 className="text-3xl font-extrabold text-foreground">Caramelo</h1>
-        <p className="mt-1 text-sm font-medium text-muted-foreground">Treino e Saúde</p>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-primary/10 via-background to-background">
+      <div className="mb-6 text-center">
+        <img
+          src={mascotImg}
+          alt="Caramelo"
+          className="mx-auto h-28 w-28 animate-bounce-in rounded-full shadow-lg"
+        />
+        <h1 className="mt-4 text-3xl font-extrabold text-foreground">
+          Boas Vindas ao Caramelo
+        </h1>
+        <p className="mt-2 text-sm font-medium text-muted-foreground leading-relaxed max-w-xs mx-auto">
+          Seu app de saúde e treinamento de cachorros 🐾 Aqui encontrará um ótimo app para gestão geral da vida do seu pet tão amado.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3">
         {!isLogin && (
           <Input
             placeholder="Seu nome"
@@ -68,9 +77,9 @@ export default function Auth() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-12 w-full rounded-xl text-base font-bold"
+          className="h-14 w-full rounded-2xl text-lg font-bold"
         >
-          {loading ? '...' : isLogin ? 'Entrar' : 'Criar conta'}
+          {loading ? '...' : isLogin ? 'Entrar 🚀' : 'Criar conta 🎯'}
         </Button>
       </form>
 
