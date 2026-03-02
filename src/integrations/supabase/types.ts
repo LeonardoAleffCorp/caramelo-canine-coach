@@ -122,6 +122,33 @@ export type Database = {
         }
         Relationships: []
       }
+      medication_types: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_custom: boolean
+          name: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       pet_achievements: {
         Row: {
           achievement_id: string
