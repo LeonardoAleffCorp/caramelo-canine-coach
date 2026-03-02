@@ -44,6 +44,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [equippedStickers, setEquippedStickers] = useState<EquippedSticker[]>([]);
+  const [petColor, setPetColor] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     supabase.from('training_categories').select('*').order('sort_order').then(({ data }) => {
@@ -53,12 +54,19 @@ export default function Home() {
 
   useEffect(() => {
     if (!pet) return;
-    const stored = localStorage.getItem(`avatar_stickers_${pet.id}`);
-    if (stored) {
-      try { setEquippedStickers(JSON.parse(stored)); } catch { setEquippedStickers([]); }
+    
+    // Load stickers
+    const storedStickers = localStorage.getItem(`avatar_stickers_${pet.id}`);
+    if (storedStickers) {
+      try { setEquippedStickers(JSON.parse(storedStickers)); } catch { setEquippedStickers([]); }
     } else {
       setEquippedStickers([]);
     }
+
+    // Load color
+    const storedColor = localStorage.getItem(`avatar_color_${pet.id}`);
+    if (storedColor) setPetColor(storedColor);
+    else setPetColor(undefined);
   }, [pet]);
 
   if (!pet || !stats) return null;
@@ -145,6 +153,7 @@ export default function Home() {
             breed={pet.breed}
             equippedStickers={equippedStickers}
             size="lg"
+            colorId={petColor}
           />
           <p className="mt-2 text-xs text-muted-foreground">Seu avatar com adesivos ✨</p>
         </div>
