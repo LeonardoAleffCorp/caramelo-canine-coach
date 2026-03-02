@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Trash2, Pencil, Pill } from 'lucide-react';
+import MedicationPicker from '@/components/MedicationPicker';
 
 interface PetMedication {
   id: string;
@@ -182,10 +183,7 @@ export default function MedicationsTab({ petId, petName }: { petId: string; petN
             <DialogTitle>{editing ? 'Editar Medicação ✏️' : 'Adicionar Medicação 💊'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome do medicamento</label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Amoxicilina" className="rounded-xl" />
-            </div>
+            <MedicationPicker value={name} onChange={setName} />
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Dosagem (opcional)</label>
               <Input value={dosage} onChange={e => setDosage(e.target.value)} placeholder="Ex: 250mg, 1 comprimido" className="rounded-xl" />
