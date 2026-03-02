@@ -6,6 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import VaccinePicker from '@/components/VaccinePicker';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import DiseasesTab from '@/components/DiseasesTab';
+import MedicationsTab from '@/components/MedicationsTab';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -118,10 +119,11 @@ export default function Saude() {
       <div className="px-5">
         <Tabs defaultValue="vacinas" className="mt-2">
           <TabsList className="w-full rounded-xl bg-muted">
-            <TabsTrigger value="vacinas" className="flex-1 rounded-lg text-[10px] font-bold px-1">💉 Vacinas</TabsTrigger>
-            <TabsTrigger value="peso" className="flex-1 rounded-lg text-[10px] font-bold px-1">⚖️ Peso</TabsTrigger>
-            <TabsTrigger value="doencas" className="flex-1 rounded-lg text-[10px] font-bold px-1">🦠 Doenças</TabsTrigger>
-            <TabsTrigger value="lembretes" className="flex-1 rounded-lg text-[10px] font-bold px-1">🔔 Lembretes</TabsTrigger>
+            <TabsTrigger value="vacinas" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">💉 Vacinas</TabsTrigger>
+            <TabsTrigger value="peso" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">⚖️ Peso</TabsTrigger>
+            <TabsTrigger value="doencas" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">🦠 Doenças</TabsTrigger>
+            <TabsTrigger value="medicacao" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">💊 Medicação</TabsTrigger>
+            <TabsTrigger value="lembretes" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">🔔 Lembretes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="vacinas" className="mt-4">
@@ -203,6 +205,10 @@ export default function Saude() {
 
           <TabsContent value="doencas">
             {pet && <DiseasesTab petId={pet.id} />}
+          </TabsContent>
+
+          <TabsContent value="medicacao">
+            {pet && <MedicationsTab petId={pet.id} petName={pet.name} />}
           </TabsContent>
 
           <TabsContent value="lembretes" className="mt-4">
