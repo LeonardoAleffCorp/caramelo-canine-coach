@@ -9,7 +9,7 @@ import PetSwitcher from '@/components/PetSwitcher';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { Progress } from '@/components/ui/progress';
 import { getBreedDefaultImage } from '@/lib/breedImages';
-import { specialAccessories } from '@/lib/accessoryImages';
+import { getStickerById, type EquippedSticker } from '@/lib/stickerEmojis';
 
 interface Category {
   id: string;
@@ -17,11 +17,6 @@ interface Category {
   emoji: string;
 }
 
-interface EquippedItem {
-  category: string;
-  emoji: string;
-  accessoryId?: string;
-}
 
 function formatAge(ageMonths: number, birthDate?: string | null): string {
   if (birthDate) {
@@ -48,7 +43,7 @@ export default function Home() {
   const { daysLeft, isTrial } = useSubscription();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [equippedItems, setEquippedItems] = useState<EquippedItem[]>([]);
+  const [equippedStickers, setEquippedStickers] = useState<EquippedSticker[]>([]);
 
   useEffect(() => {
     supabase.from('training_categories').select('*').order('sort_order').then(({ data }) => {
@@ -58,21 +53,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!pet) return;
-    // Load special accessories from localStorage
-    const stored = localStorage.getItem(`avatar_special_${pet.id}`);
+    const stored = localStorage.getItem(`avatar_stickers_${pet.id}`);
     if (stored) {
-      try {
-        const ids: string[] = JSON.parse(stored);
-        const items = ids
-          .map(id => specialAccessories.find(a => a.id === id))
-          .filter(Boolean)
-          .map(a => ({ category: a!.category, emoji: a!.emoji, accessoryId: a!.id }));
-        setEquippedItems(items);
-      } catch {
-        setEquippedItems([]);
-      }
+      try { setEquippedStickers(JSON.parse(stored)); } catch { setEquippedStickers([]); }
     } else {
-      setEquippedItems([]);
+      setEquippedStickers([]);
     }
   }, [pet]);
 
@@ -158,7 +143,7 @@ export default function Home() {
         <div className="mt-4 mb-8 flex flex-col items-center">
           <PetAvatarPreview
             breed={pet.breed}
-            equippedItems={equippedItems}
+            equippedStickers={equippedStickers}
             size="lg"
           />
           <p className="mt-2 text-xs text-muted-foreground">Seu avatar com adesivos ✨</p>

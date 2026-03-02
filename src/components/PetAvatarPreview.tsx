@@ -1,39 +1,36 @@
 import { getBreedBodyImage } from '@/lib/breedBodyImages';
 import { getBreedWeightImage } from '@/lib/breedWeightImages';
-import { getAccessoryById, accessoryPositions } from '@/lib/accessoryImages';
-
-interface EquippedItem {
-  category: string;
-  emoji: string;
-  accessoryId?: string;
-}
+import { getStickerById, type EquippedSticker, type StickerPosition } from '@/lib/stickerEmojis';
 
 interface PetAvatarPreviewProps {
   breed: string;
-  equippedItems: EquippedItem[];
+  equippedStickers?: EquippedSticker[];
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   weightStatus?: 'underweight' | 'healthy' | 'overweight' | 'obese';
 }
 
 const sizeConfig = {
-  sm: { container: 'h-28 w-28', img: 'h-24 w-24' },
-  md: { container: 'h-44 w-44', img: 'h-40 w-40' },
-  lg: { container: 'h-64 w-64', img: 'h-56 w-56' },
+  sm: { container: 'h-28 w-28', img: 'h-24 w-24', emoji: 'text-lg' },
+  md: { container: 'h-44 w-44', img: 'h-40 w-40', emoji: 'text-2xl' },
+  lg: { container: 'h-64 w-64', img: 'h-56 w-56', emoji: 'text-3xl' },
 };
 
-export default function PetAvatarPreview({ breed, equippedItems, size = 'lg', className = '', weightStatus }: PetAvatarPreviewProps) {
+// Position styles for the 8 slots around the avatar
+const positionStyles: Record<StickerPosition, React.CSSProperties> = {
+  'top-left':      { top: '-8px', left: '-8px' },
+  'top-center':    { top: '-12px', left: '50%', transform: 'translateX(-50%)' },
+  'top-right':     { top: '-8px', right: '-8px' },
+  'mid-left':      { top: '50%', left: '-12px', transform: 'translateY(-50%)' },
+  'mid-right':     { top: '50%', right: '-12px', transform: 'translateY(-50%)' },
+  'bottom-left':   { bottom: '-8px', left: '-8px' },
+  'bottom-center': { bottom: '-12px', left: '50%', transform: 'translateX(-50%)' },
+  'bottom-right':  { bottom: '-8px', right: '-8px' },
+};
+
+export default function PetAvatarPreview({ breed, equippedStickers = [], size = 'lg', className = '', weightStatus }: PetAvatarPreviewProps) {
   const config = sizeConfig[size];
   const bodyImg = weightStatus ? getBreedWeightImage(breed, weightStatus) : getBreedBodyImage(breed);
-
-  // Get unique equipped accessories with images
-  const equippedAccessories = equippedItems
-    .filter(item => item.accessoryId)
-    .map(item => {
-      const def = getAccessoryById(item.accessoryId!);
-      return def ? { ...def, position: accessoryPositions[def.category] } : null;
-    })
-    .filter(Boolean);
 
   return (
     <div className={`relative flex items-center justify-center rounded-3xl bg-gradient-to-b from-accent to-accent/50 shadow-inner ${config.container} ${className}`}>
@@ -44,38 +41,20 @@ export default function PetAvatarPreview({ breed, equippedItems, size = 'lg', cl
         className={`${config.img} rounded-2xl object-contain`}
       />
 
-      {/* Accessory overlays */}
-      {equippedAccessories.map((acc) => (
-        <img
-          key={acc!.id}
-          src={acc!.image}
-          alt={acc!.name}
-          className="absolute pointer-events-none"
-          style={{
-            top: acc!.position.top,
-            left: acc!.position.left,
-            width: acc!.position.width,
-            objectFit: 'contain',
-            zIndex: acc!.category === 'hat' ? 10 : acc!.category === 'glasses' ? 20 : 5,
-          }}
-        />
-      ))}
-
-      {/* Fallback emoji overlays for non-special accessories */}
-      {equippedItems
-        .filter(item => !item.accessoryId)
-        .map((item, i) => (
+      {/* Emoji stickers around the avatar */}
+      {equippedStickers.map((sticker) => {
+        const def = getStickerById(sticker.stickerId);
+        if (!def) return null;
+        return (
           <span
-            key={`emoji-${i}`}
-            className="absolute text-2xl"
-            style={{
-              top: item.category === 'hat' ? '0' : item.category === 'glasses' ? '30%' : '65%',
-              zIndex: 30,
-            }}
+            key={sticker.position}
+            className={`absolute ${config.emoji} pointer-events-none drop-shadow-md`}
+            style={{ ...positionStyles[sticker.position], zIndex: 10 }}
           >
-            {item.emoji}
+            {def.emoji}
           </span>
-        ))}
+        );
+      })}
     </div>
   );
 }

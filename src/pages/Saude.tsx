@@ -21,10 +21,7 @@ interface Vaccine {
 interface WeightLog {
   id: string; weight_kg: number; recorded_at: string;
 }
-interface EquippedItem {
-  category: string;
-  emoji: string;
-}
+import { type EquippedSticker } from '@/lib/stickerEmojis';
 
 export default function Saude() {
   const { pet } = usePet();
@@ -38,7 +35,7 @@ export default function Saude() {
   const [vNext, setVNext] = useState('');
   const [newWeight, setNewWeight] = useState('1');
   const [breedSize, setBreedSize] = useState('médio');
-  const [equippedItems, setEquippedItems] = useState<EquippedItem[]>([]);
+  const [equippedStickers, setEquippedStickers] = useState<EquippedSticker[]>([]);
 
   const fetchData = async () => {
     if (!pet) return;
@@ -52,14 +49,10 @@ export default function Saude() {
     const { data: breed } = await supabase.from('breeds').select('size_category').eq('name', pet.breed).maybeSingle();
     if (breed) setBreedSize(breed.size_category);
 
-    // Fetch equipped items for avatar
-    const { data: avatarData } = await supabase.from('pet_avatar').select('item_id').eq('pet_id', pet.id);
-    if (avatarData && avatarData.length > 0) {
-      const itemIds = avatarData.map((d: any) => d.item_id);
-      const { data: itemsData } = await supabase.from('avatar_items').select('category, emoji').in('id', itemIds);
-      if (itemsData) setEquippedItems(itemsData as EquippedItem[]);
-    } else {
-      setEquippedItems([]);
+    // Load stickers from localStorage
+    const stored = localStorage.getItem(`avatar_stickers_${pet.id}`);
+    if (stored) {
+      try { setEquippedStickers(JSON.parse(stored)); } catch { setEquippedStickers([]); }
     }
   };
 
@@ -150,7 +143,7 @@ export default function Saude() {
               <div className="mb-4 flex flex-col items-center">
                 <PetAvatarPreview
                   breed={pet.breed}
-                  equippedItems={equippedItems}
+                  equippedStickers={equippedStickers}
                   size="md"
                   weightStatus={weightStatus}
                 />
