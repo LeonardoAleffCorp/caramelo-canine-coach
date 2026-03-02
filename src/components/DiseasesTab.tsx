@@ -34,6 +34,11 @@ const categoryLabels: Record<string, string> = {
   geral: '🏥 Gerais',
 };
 
+function computeStatus(endDate: string | null): string {
+  if (!endDate) return 'em_tratamento';
+  return new Date(endDate) < new Date(new Date().toDateString()) ? 'tratado' : 'em_tratamento';
+}
+
 const statusLabels: Record<string, { label: string; emoji: string; color: string }> = {
   em_tratamento: { label: 'Em tratamento', emoji: '🔄', color: 'text-amber-600 dark:text-amber-400' },
   tratado: { label: 'Já tratado', emoji: '✅', color: 'text-green-600 dark:text-green-400' },
@@ -146,7 +151,8 @@ export default function DiseasesTab({ petId }: { petId: string }) {
 
       <div className="space-y-3">
         {petDiseases.map((d) => {
-          const st = statusLabels[d.treatment_status] || statusLabels.em_tratamento;
+          const autoStatus = computeStatus(d.treatment_end);
+          const st = statusLabels[autoStatus];
           return (
             <div key={d.id} className="flex items-start gap-3 rounded-2xl bg-card p-4 shadow-sm">
               <span className="text-2xl"><Bug className="h-6 w-6 text-muted-foreground" /></span>

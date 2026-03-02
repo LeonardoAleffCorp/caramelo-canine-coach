@@ -238,6 +238,53 @@ export type Database = {
           },
         ]
       }
+      pet_medications: {
+        Row: {
+          created_at: string
+          dosage: string | null
+          frequency_hours: number
+          id: string
+          name: string
+          notes: string | null
+          pet_id: string
+          treatment_end: string | null
+          treatment_start: string
+          treatment_status: string
+        }
+        Insert: {
+          created_at?: string
+          dosage?: string | null
+          frequency_hours?: number
+          id?: string
+          name: string
+          notes?: string | null
+          pet_id: string
+          treatment_end?: string | null
+          treatment_start?: string
+          treatment_status?: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string | null
+          frequency_hours?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          pet_id?: string
+          treatment_end?: string | null
+          treatment_start?: string
+          treatment_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_medications_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pet_stats: {
         Row: {
           current_streak: number
