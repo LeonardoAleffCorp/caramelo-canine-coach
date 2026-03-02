@@ -95,6 +95,33 @@ export type Database = {
         }
         Relationships: []
       }
+      disease_types: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_custom: boolean
+          name: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       pet_achievements: {
         Row: {
           achievement_id: string
@@ -160,6 +187,50 @@ export type Database = {
           },
           {
             foreignKeyName: "pet_avatar_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pet_diseases: {
+        Row: {
+          created_at: string
+          custom_description: string | null
+          disease_name: string
+          id: string
+          notes: string | null
+          pet_id: string
+          treatment_end: string | null
+          treatment_start: string | null
+          treatment_status: string
+        }
+        Insert: {
+          created_at?: string
+          custom_description?: string | null
+          disease_name: string
+          id?: string
+          notes?: string | null
+          pet_id: string
+          treatment_end?: string | null
+          treatment_start?: string | null
+          treatment_status?: string
+        }
+        Update: {
+          created_at?: string
+          custom_description?: string | null
+          disease_name?: string
+          id?: string
+          notes?: string | null
+          pet_id?: string
+          treatment_end?: string | null
+          treatment_start?: string | null
+          treatment_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_diseases_pet_id_fkey"
             columns: ["pet_id"]
             isOneToOne: false
             referencedRelation: "pets"
