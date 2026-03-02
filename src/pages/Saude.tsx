@@ -36,6 +36,7 @@ export default function Saude() {
   const [newWeight, setNewWeight] = useState('1');
   const [breedSize, setBreedSize] = useState('médio');
   const [equippedStickers, setEquippedStickers] = useState<EquippedSticker[]>([]);
+  const [petColor, setPetColor] = useState<string | undefined>(undefined);
 
   const fetchData = async () => {
     if (!pet) return;
@@ -50,10 +51,15 @@ export default function Saude() {
     if (breed) setBreedSize(breed.size_category);
 
     // Load stickers from localStorage
-    const stored = localStorage.getItem(`avatar_stickers_${pet.id}`);
-    if (stored) {
-      try { setEquippedStickers(JSON.parse(stored)); } catch { setEquippedStickers([]); }
+    const storedStickers = localStorage.getItem(`avatar_stickers_${pet.id}`);
+    if (storedStickers) {
+      try { setEquippedStickers(JSON.parse(storedStickers)); } catch { setEquippedStickers([]); }
     }
+    
+    // Load color
+    const storedColor = localStorage.getItem(`avatar_color_${pet.id}`);
+    if (storedColor) setPetColor(storedColor);
+    else setPetColor(undefined);
   };
 
   useEffect(() => { fetchData(); }, [pet]);
@@ -146,6 +152,7 @@ export default function Saude() {
                   equippedStickers={equippedStickers}
                   size="md"
                   weightStatus={weightStatus}
+                  colorId={petColor}
                 />
               </div>
             )}

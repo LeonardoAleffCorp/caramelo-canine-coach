@@ -1,5 +1,6 @@
 import { getBreedBodyImage } from '@/lib/breedBodyImages';
 import { getBreedWeightImage } from '@/lib/breedWeightImages';
+import { getBreedColorImage } from '@/lib/breedColorImages';
 import { getStickerById, type EquippedSticker, type StickerPosition } from '@/lib/stickerEmojis';
 
 interface PetAvatarPreviewProps {
@@ -8,6 +9,7 @@ interface PetAvatarPreviewProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   weightStatus?: 'underweight' | 'healthy' | 'overweight' | 'obese';
+  colorId?: string; // Add colorId prop
 }
 
 const sizeConfig = {
@@ -18,19 +20,39 @@ const sizeConfig = {
 
 // Position styles for the 8 slots around the avatar
 const positionStyles: Record<StickerPosition, React.CSSProperties> = {
-  'top-left':      { top: '-8px', left: '-8px' },
-  'top-center':    { top: '-12px', left: '50%', transform: 'translateX(-50%)' },
-  'top-right':     { top: '-8px', right: '-8px' },
-  'mid-left':      { top: '50%', left: '-12px', transform: 'translateY(-50%)' },
-  'mid-right':     { top: '50%', right: '-12px', transform: 'translateY(-50%)' },
-  'bottom-left':   { bottom: '-8px', left: '-8px' },
-  'bottom-center': { bottom: '-12px', left: '50%', transform: 'translateX(-50%)' },
-  'bottom-right':  { bottom: '-8px', right: '-8px' },
+  'top-left':      { top: '0px', left: '0px', transform: 'translate(-30%, -30%)' },
+  'top-center':    { top: '-10px', left: '50%', transform: 'translate(-50%, -50%)' },
+  'top-right':     { top: '0px', right: '0px', transform: 'translate(30%, -30%)' },
+  'mid-left':      { top: '50%', left: '-10px', transform: 'translate(-50%, -50%)' },
+  'mid-right':     { top: '50%', right: '-10px', transform: 'translate(50%, -50%)' },
+  'bottom-left':   { bottom: '0px', left: '0px', transform: 'translate(-30%, 30%)' },
+  'bottom-center': { bottom: '-10px', left: '50%', transform: 'translate(-50%, 50%)' },
+  'bottom-right':  { bottom: '0px', right: '0px', transform: 'translate(30%, 30%)' },
 };
 
-export default function PetAvatarPreview({ breed, equippedStickers = [], size = 'lg', className = '', weightStatus }: PetAvatarPreviewProps) {
+export default function PetAvatarPreview({ 
+  breed, 
+  equippedStickers = [], 
+  size = 'lg', 
+  className = '', 
+  weightStatus,
+  colorId 
+}: PetAvatarPreviewProps) {
   const config = sizeConfig[size];
-  const bodyImg = weightStatus ? getBreedWeightImage(breed, weightStatus) : getBreedBodyImage(breed);
+  
+  // Logic: 
+  // 1. If weightStatus is present, it takes precedence (Saude tab) - uses weight images (no color variants for weight yet)
+  // 2. Else if colorId is present and valid, use the color variant image
+  // 3. Fallback to default breed body image
+  
+  let bodyImg = getBreedBodyImage(breed);
+  
+  if (weightStatus) {
+    bodyImg = getBreedWeightImage(breed, weightStatus);
+  } else if (colorId) {
+    const colorImg = getBreedColorImage(breed, colorId);
+    if (colorImg) bodyImg = colorImg;
+  }
 
   return (
     <div className={`relative flex items-center justify-center rounded-3xl bg-gradient-to-b from-accent to-accent/50 shadow-inner ${config.container} ${className}`}>

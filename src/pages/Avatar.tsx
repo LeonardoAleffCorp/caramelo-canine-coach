@@ -5,8 +5,11 @@ import PageHeader from '@/components/PageHeader';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { toast } from 'sonner';
 import { dogStickers, getStickersByCategory, STICKER_POSITIONS, type EquippedSticker, type StickerDef } from '@/lib/stickerEmojis';
-import { Lock } from 'lucide-react';
+import { Lock, Palette } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getBreedColorConfig, type BreedColorConfig } from '@/lib/breedColorImages';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 const categoryLabels: Record<string, { label: string; emoji: string }> = {
   emotions: { label: 'Emoções', emoji: '😊' },
@@ -19,19 +22,42 @@ export default function Avatar() {
   const { pet } = usePet();
   const [equipped, setEquipped] = useState<EquippedSticker[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('emotions');
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
+  const [colorConfig, setColorConfig] = useState<BreedColorConfig | null>(null);
 
   useEffect(() => {
     if (!pet) return;
-    const stored = localStorage.getItem(`avatar_stickers_${pet.id}`);
-    if (stored) {
-      try { setEquipped(JSON.parse(stored)); } catch { /* ignore */ }
+    
+    // Load stickers
+    const storedStickers = localStorage.getItem(`avatar_stickers_${pet.id}`);
+    if (storedStickers) {
+      try { setEquipped(JSON.parse(storedStickers)); } catch { /* ignore */ }
     }
+    
+    // Load color
+    const storedColor = localStorage.getItem(`avatar_color_${pet.id}`);
+    if (storedColor) {
+      setSelectedColor(storedColor);
+    } else {
+      // Default to undefined to use base image
+      setSelectedColor(undefined);
+    }
+
+    // Load breed color config
+    setColorConfig(getBreedColorConfig(pet.breed));
   }, [pet]);
 
   const saveEquipped = (newList: EquippedSticker[]) => {
     if (!pet) return;
     setEquipped(newList);
     localStorage.setItem(`avatar_stickers_${pet.id}`, JSON.stringify(newList));
+  };
+
+  const saveColor = (colorId: string) => {
+    if (!pet) return;
+    setSelectedColor(colorId);
+    localStorage.setItem(`avatar_color_${pet.id}`, colorId);
+    toast.success('Cor atualizada!');
   };
 
   const toggleSticker = (sticker: StickerDef) => {
@@ -72,12 +98,48 @@ export default function Avatar() {
         </p>
 
         {/* Avatar preview */}
-        <div className="flex flex-col items-center mb-4">
+        <div className="flex flex-col items-center mb-4 relative">
           <PetAvatarPreview
             breed={pet?.breed || 'Vira-lata/SRD'}
             equippedStickers={equipped}
             size="lg"
+            colorId={selectedColor}
           />
+          
+          {/* Color Picker Button - only if config exists and has variants */}
+          {colorConfig && colorConfig.colors.length > 0 && (
+            <div className="absolute top-0 right-8">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-full bg-background border-2 border-primary shadow-sm hover:bg-accent">
+                    <Palette className="h-4 w-4 text-primary" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" side="left">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-bold text-center mb-1">Cor do pelo</p>
+                    <div className="flex flex-col gap-1">
+                      {colorConfig.colors.map((color) => (
+                        <button
+                          key={color.id}
+                          onClick={() => saveColor(color.id)}
+                          className={`px-3 py-1.5 text-xs rounded-md transition-colors text-left flex items-center gap-2 ${
+                            selectedColor === color.id || (!selectedColor && color.id === colorConfig.defaultColor)
+                              ? 'bg-primary text-primary-foreground font-bold'
+                              : 'hover:bg-accent'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-current opacity-50" />
+                          {color.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
           <p className="mt-2 text-lg font-extrabold text-foreground">{pet?.name}</p>
           <p className="text-xs text-muted-foreground">{equipped.length}/8 figurinhas</p>
         </div>
