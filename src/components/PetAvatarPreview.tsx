@@ -22,14 +22,13 @@ const sizeConfig = {
   lg: { container: 'h-64 w-64', img: 'h-56 w-56', emoji: 'text-3xl' },
 };
 
-// Position styles for the 7 slots around the avatar
+// Position styles for the 6 slots around the avatar
 const positionStyles: Record<StickerPosition, React.CSSProperties> = {
   'top-left':      { top: '0px', left: '0px', transform: 'translate(-30%, -30%)' },
   'top-right':     { top: '0px', right: '0px', transform: 'translate(30%, -30%)' },
   'mid-left':      { top: '50%', left: '-10px', transform: 'translate(-50%, -50%)' },
   'mid-right':     { top: '50%', right: '-10px', transform: 'translate(50%, -50%)' },
   'bottom-left':   { bottom: '0px', left: '0px', transform: 'translate(-30%, 30%)' },
-  'bottom-center': { bottom: '-10px', left: '50%', transform: 'translate(-50%, 50%)' },
   'bottom-right':  { bottom: '0px', right: '0px', transform: 'translate(30%, 30%)' },
 };
 

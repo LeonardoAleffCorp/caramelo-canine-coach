@@ -178,10 +178,10 @@ export default function FichaCanina({ pet }: FichaProps) {
   };
 
   const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
-    <div className="rounded-2xl bg-card p-4 shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-bold text-foreground">{title}</h3>
+    <div className="rounded-xl bg-card px-3 py-2 shadow-sm">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Icon className="h-3.5 w-3.5 text-primary" />
+        <h3 className="text-xs font-bold text-foreground">{title}</h3>
       </div>
       {children}
     </div>
@@ -189,9 +189,9 @@ export default function FichaCanina({ pet }: FichaProps) {
 
   const InfoLine = ({ label, value }: { label: string; value: string | null | undefined }) => (
     value ? (
-      <div className="flex justify-between py-1 border-b border-border/50 last:border-0">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-xs font-medium text-foreground text-right max-w-[60%]">{value}</span>
+      <div className="flex justify-between py-0.5 border-b border-border/30 last:border-0">
+        <span className="text-[10px] text-muted-foreground">{label}</span>
+        <span className="text-[10px] font-medium text-foreground text-right max-w-[60%]">{value}</span>
       </div>
     ) : null
   );
@@ -199,90 +199,96 @@ export default function FichaCanina({ pet }: FichaProps) {
   const tutorAddress = tutor ? [tutor.address_street, tutor.address_number, tutor.address_neighborhood, tutor.address_city, tutor.address_state].filter(Boolean).join(', ') : null;
 
   return (
-    <div className="mt-4 space-y-4 pb-4" ref={fichaRef}>
+    <div className="mt-2 space-y-2 pb-2" ref={fichaRef}>
       {/* Export button */}
-      <Button onClick={exportFichaPdf} variant="outline" className="w-full rounded-xl gap-2" disabled={exporting}>
-        {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+      <Button onClick={exportFichaPdf} variant="outline" className="w-full rounded-lg gap-2 h-9 text-xs" disabled={exporting}>
+        {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
         {exporting ? 'Gerando PDF...' : 'Baixar / Compartilhar PDF'}
       </Button>
 
-      {/* Pet header */}
-      <div className="flex flex-col items-center">
+      {/* Pet header - compact */}
+      <div className="flex items-center gap-3 rounded-xl bg-card px-3 py-2 shadow-sm">
         <PetAvatarPreview
           breed={pet.breed}
           equippedStickers={equippedStickers}
-          size="md"
+          size="sm"
           weightStatus={weightStatus || undefined}
           colorId={petColor}
           frameId={frameId}
           bgColor={bgColorId}
         />
-        <h2 className="mt-2 text-xl font-extrabold text-foreground">{pet.name}</h2>
-        {weightInfo && (
-          <span className={`text-xs font-bold ${weightInfo.color}`}>{weightInfo.emoji} {weightInfo.label}</span>
-        )}
+        <div className="flex-1">
+          <h2 className="text-base font-extrabold text-foreground">{pet.name}</h2>
+          <p className="text-[10px] text-muted-foreground">{pet.breed} • {ageText}</p>
+          {weightInfo && (
+            <span className={`text-[10px] font-bold ${weightInfo.color}`}>{weightInfo.emoji} {weightInfo.label} {currentWeight ? `(${currentWeight}kg)` : ''}</span>
+          )}
+        </div>
       </div>
 
-      {/* Dog data */}
-      <Section icon={Dog} title="Dados do Dog 🐶">
-        <InfoLine label="Nome" value={pet.name} />
-        <InfoLine label="Raça" value={pet.breed} />
-        <InfoLine label="Idade" value={ageText} />
-        <InfoLine label="Peso" value={currentWeight ? `${currentWeight} kg` : null} />
-        <InfoLine label="Nascimento" value={pet.birth_date ? new Date(pet.birth_date + 'T12:00:00').toLocaleDateString('pt-BR') : null} />
-        <InfoLine label="Porte" value={breedSize} />
-      </Section>
+      {/* Two-column grid for Dog + Tutor */}
+      <div className="grid grid-cols-2 gap-2">
+        <Section icon={Dog} title="Dados do Dog 🐶">
+          <InfoLine label="Nome" value={pet.name} />
+          <InfoLine label="Raça" value={pet.breed} />
+          <InfoLine label="Idade" value={ageText} />
+          <InfoLine label="Peso" value={currentWeight ? `${currentWeight} kg` : null} />
+          <InfoLine label="Nascimento" value={pet.birth_date ? new Date(pet.birth_date + 'T12:00:00').toLocaleDateString('pt-BR') : null} />
+          <InfoLine label="Porte" value={breedSize} />
+        </Section>
 
-      {/* Tutor data */}
-      <Section icon={User} title="Dados do Tutor 👤">
-        {tutor ? (
-          <>
-            <InfoLine label="Nome" value={tutor.full_name} />
-            <InfoLine label="E-mail" value={tutor.email} />
-            <InfoLine label="Telefone" value={tutor.phone} />
-            <InfoLine label="Endereço" value={tutorAddress} />
-            <InfoLine label="CEP" value={tutor.address_zip} />
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground">Não cadastrado — vá na aba Tutor para adicionar.</p>
-        )}
-      </Section>
+        <Section icon={User} title="Tutor 👤">
+          {tutor ? (
+            <>
+              <InfoLine label="Nome" value={tutor.full_name} />
+              <InfoLine label="E-mail" value={tutor.email} />
+              <InfoLine label="Telefone" value={tutor.phone} />
+              <InfoLine label="Endereço" value={tutorAddress} />
+              <InfoLine label="CEP" value={tutor.address_zip} />
+            </>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">Não cadastrado</p>
+          )}
+        </Section>
+      </div>
 
-      {/* Vet data */}
-      <Section icon={Building2} title="Dados da Veterinária 🏥">
+      {/* Vet - full width */}
+      <Section icon={Building2} title="Veterinária 🏥">
         {vet ? (
-          <>
+          <div className="grid grid-cols-2 gap-x-3">
             <InfoLine label="Clínica" value={vet.clinic_name} />
             <InfoLine label="Veterinário(a)" value={vet.vet_name} />
             <InfoLine label="Telefone" value={vet.phone} />
             <InfoLine label="E-mail" value={vet.email} />
-            <InfoLine label="Endereço" value={vet.address} />
-          </>
+            <div className="col-span-2">
+              <InfoLine label="Endereço" value={vet.address} />
+            </div>
+          </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Não cadastrado — vá na aba Veterinária para adicionar.</p>
+          <p className="text-[10px] text-muted-foreground">Não cadastrado</p>
         )}
       </Section>
 
-      {/* Vaccines */}
-      <Section icon={Syringe} title="Vacinas 💉">
-        {vaccines.length > 0 ? vaccines.map(v => (
-          <InfoLine key={v.id} label={v.name} value={new Date(v.applied_date).toLocaleDateString('pt-BR')} />
-        )) : <p className="text-xs text-muted-foreground">Nenhuma vacina registrada.</p>}
-      </Section>
+      {/* Three-column grid for Vaccines, Diseases, Medications */}
+      <div className="grid grid-cols-3 gap-2">
+        <Section icon={Syringe} title="Vacinas 💉">
+          {vaccines.length > 0 ? vaccines.map(v => (
+            <InfoLine key={v.id} label={v.name} value={new Date(v.applied_date).toLocaleDateString('pt-BR')} />
+          )) : <p className="text-[10px] text-muted-foreground">Nenhuma</p>}
+        </Section>
 
-      {/* Diseases */}
-      <Section icon={HeartPulse} title="Doenças 🦠">
-        {diseases.length > 0 ? diseases.map(d => (
-          <InfoLine key={d.id} label={d.disease_name} value={d.treatment_status === 'em_tratamento' ? '🔴 Em tratamento' : '🟢 Concluído'} />
-        )) : <p className="text-xs text-muted-foreground">Nenhuma doença registrada.</p>}
-      </Section>
+        <Section icon={HeartPulse} title="Doenças 🦠">
+          {diseases.length > 0 ? diseases.map(d => (
+            <InfoLine key={d.id} label={d.disease_name} value={d.treatment_status === 'em_tratamento' ? '🔴' : '🟢'} />
+          )) : <p className="text-[10px] text-muted-foreground">Nenhuma</p>}
+        </Section>
 
-      {/* Medications */}
-      <Section icon={Pill} title="Medicações 💊">
-        {medications.length > 0 ? medications.map(m => (
-          <InfoLine key={m.id} label={m.name} value={m.dosage || m.treatment_status} />
-        )) : <p className="text-xs text-muted-foreground">Nenhuma medicação registrada.</p>}
-      </Section>
+        <Section icon={Pill} title="Medicações 💊">
+          {medications.length > 0 ? medications.map(m => (
+            <InfoLine key={m.id} label={m.name} value={m.dosage || ''} />
+          )) : <p className="text-[10px] text-muted-foreground">Nenhuma</p>}
+        </Section>
+      </div>
     </div>
   );
 }

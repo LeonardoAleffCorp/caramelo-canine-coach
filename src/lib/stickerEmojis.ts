@@ -50,11 +50,11 @@ export function getStickersByCategory(category: string): StickerDef[] {
   return dogStickers.filter(s => s.category === category);
 }
 
-// 7 positions around the avatar square (no top-center to keep name area clear)
+// 6 positions around the avatar square
 export const STICKER_POSITIONS = [
   'top-left', 'top-right',
   'mid-left', 'mid-right',
-  'bottom-left', 'bottom-center', 'bottom-right',
+  'bottom-left', 'bottom-right',
 ] as const;
 
 export type StickerPosition = typeof STICKER_POSITIONS[number];
