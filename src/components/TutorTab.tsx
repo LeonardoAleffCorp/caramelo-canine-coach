@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Pencil, User, Phone, Mail, MapPin, Camera } from 'lucide-react';
-
+import { Pencil, User, Phone, Mail, MapPin, Camera, Trash2 } from 'lucide-react';
 
 interface TutorProfile {
   id: string;
@@ -26,6 +25,8 @@ export default function TutorTab() {
   const { user } = useAuth();
   const [tutor, setTutor] = useState<TutorProfile | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '',
     address_street: '', address_number: '', address_neighborhood: '',
@@ -62,6 +63,43 @@ export default function TutorTab() {
       });
     }
     setShowModal(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Imagem muito grande (máx 5MB)');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `tutor/${user.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('pet-photos')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('pet-photos')
+        .getPublicUrl(path);
+
+      setForm({ ...form, photo_url: publicUrl });
+      toast.success('Foto carregada! 📸');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao enviar foto');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = () => {
+    setForm({ ...form, photo_url: '' });
   };
 
   const save = async () => {
@@ -116,6 +154,53 @@ export default function TutorTab() {
         <DialogContent className="rounded-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>👤 Dados do Tutor</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            {/* Photo upload section */}
+            <div className="flex flex-col items-center gap-2">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Foto do tutor</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="relative h-20 w-20 rounded-full overflow-hidden bg-accent border-2 border-primary/20 transition-transform active:scale-95"
+                  disabled={uploading}
+                >
+                  {form.photo_url ? (
+                    <img src={form.photo_url} alt="Tutor" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <Camera className="h-6 w-6" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                    <Camera className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                      <span className="text-xs font-bold animate-pulse">...</span>
+                    </div>
+                  )}
+                </button>
+                {form.photo_url && (
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
+              <p className="text-[10px] text-muted-foreground">Toque para tirar foto ou escolher da galeria</p>
+            </div>
+
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome completo</label>
               <Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="rounded-xl" />
@@ -155,10 +240,6 @@ export default function TutorTab() {
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">CEP</label>
               <Input value={form.address_zip} onChange={e => setForm({ ...form, address_zip: e.target.value })} placeholder="00000-000" className="rounded-xl" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">URL da foto (opcional)</label>
-              <Input value={form.photo_url} onChange={e => setForm({ ...form, photo_url: e.target.value })} placeholder="https://..." className="rounded-xl" />
             </div>
             <Button onClick={save} className="w-full rounded-xl">Salvar</Button>
           </div>

@@ -22,7 +22,7 @@ const categoryLabels: Record<string, { label: string; emoji: string }> = {
 type AvatarTab = 'stickers' | 'frames';
 
 export default function Avatar() {
-  const { pet } = usePet();
+  const { pet, weightStatus } = usePet();
   const [equipped, setEquipped] = useState<EquippedSticker[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('emotions');
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
@@ -116,6 +116,7 @@ export default function Avatar() {
             colorId={selectedColor}
             frameId={frameId}
             bgColor={bgColorId}
+            weightStatus={weightStatus || undefined}
           />
           
           {colorConfig && colorConfig.colors.length > 0 && (
