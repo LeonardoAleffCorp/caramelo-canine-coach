@@ -14,6 +14,7 @@ interface SubscriptionContextType {
   subscription: Subscription | null;
   loading: boolean;
   isActive: boolean;
+  isAdmin: boolean;
   daysLeft: number;
   isTrial: boolean;
   startTrial: () => Promise<void>;
@@ -27,10 +28,21 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchSubscription = async () => {
-    if (!user) { setSubscription(null); setLoading(false); return; }
+    if (!user) { setSubscription(null); setIsAdmin(false); setLoading(false); return; }
     setLoading(true);
+
+    // Check admin role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    setIsAdmin(!!roleData);
+
     const { data } = await supabase
       .from('subscriptions')
       .select('*')
@@ -47,7 +59,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const now = new Date();
   const expiresAt = subscription ? new Date(subscription.expires_at) : null;
-  const isActive = !!subscription && !!expiresAt && expiresAt > now;
+  const isActive = isAdmin || (!!subscription && !!expiresAt && expiresAt > now);
   const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / 86400000)) : 0;
   const isTrial = subscription?.plan_type === 'trial';
 
@@ -82,7 +94,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   return (
     <SubscriptionContext.Provider value={{
-      subscription, loading, isActive, daysLeft, isTrial,
+      subscription, loading, isActive, isAdmin, daysLeft, isTrial,
       startTrial, activatePlan, refreshSubscription: fetchSubscription,
     }}>
       {children}
