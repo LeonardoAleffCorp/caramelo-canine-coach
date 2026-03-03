@@ -90,8 +90,8 @@ export default function Avatar() {
       toast.success('Figurinha removida!');
       return;
     }
-    if (equipped.length >= 7) {
-      toast.error('Máximo de 7 figurinhas! Remova uma primeiro.');
+    if (equipped.length >= 6) {
+      toast.error('Máximo de 6 figurinhas! Remova uma primeiro.');
       return;
     }
     const usedPositions = new Set(equipped.map(e => e.position));
@@ -153,7 +153,7 @@ export default function Avatar() {
           )}
 
           <p className="mt-2 text-lg font-extrabold text-foreground">{pet?.name}</p>
-          <p className="text-xs text-muted-foreground">{equipped.length}/7 figurinhas</p>
+          <p className="text-xs text-muted-foreground">{equipped.length}/6 figurinhas</p>
         </div>
 
         {/* Main tabs: Figurinhas vs Moldura */}
