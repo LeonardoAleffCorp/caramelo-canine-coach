@@ -6,6 +6,7 @@ import { usePet } from '@/hooks/usePet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLog';
 import BreedPicker from '@/components/BreedPicker';
 import PetPhotoUpload from '@/components/PetPhotoUpload';
 
@@ -93,6 +94,7 @@ export default function Onboarding() {
       }
 
       await refreshPet();
+      logActivity('pet_created', { pet_name: name, breed: breed || 'Vira-lata/SRD' });
       toast.success(`${name} cadastrado! 🎉`);
       navigate('/planos');
     } catch (err: any) {

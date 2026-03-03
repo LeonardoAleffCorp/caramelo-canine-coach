@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       avatar_items: {
         Row: {
           category: string
@@ -225,6 +249,7 @@ export type Database = {
         Row: {
           created_at: string
           custom_description: string | null
+          deleted_at: string | null
           disease_name: string
           id: string
           notes: string | null
@@ -236,6 +261,7 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_description?: string | null
+          deleted_at?: string | null
           disease_name: string
           id?: string
           notes?: string | null
@@ -247,6 +273,7 @@ export type Database = {
         Update: {
           created_at?: string
           custom_description?: string | null
+          deleted_at?: string | null
           disease_name?: string
           id?: string
           notes?: string | null
@@ -268,6 +295,7 @@ export type Database = {
       pet_medications: {
         Row: {
           created_at: string
+          deleted_at: string | null
           dosage: string | null
           frequency_hours: number
           id: string
@@ -280,6 +308,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           dosage?: string | null
           frequency_hours?: number
           id?: string
@@ -292,6 +321,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           dosage?: string | null
           frequency_hours?: number
           id?: string
@@ -401,6 +431,7 @@ export type Database = {
           birth_date: string | null
           breed: string
           created_at: string
+          deleted_at: string | null
           id: string
           name: string
           owner_id: string
@@ -413,6 +444,7 @@ export type Database = {
           birth_date?: string | null
           breed?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name: string
           owner_id: string
@@ -425,6 +457,7 @@ export type Database = {
           birth_date?: string | null
           breed?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           owner_id?: string
@@ -458,6 +491,7 @@ export type Database = {
       subscriptions: {
         Row: {
           created_at: string
+          deleted_at: string | null
           expires_at: string
           id: string
           is_active: boolean
@@ -467,6 +501,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           expires_at: string
           id?: string
           is_active?: boolean
@@ -476,6 +511,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           expires_at?: string
           id?: string
           is_active?: boolean
@@ -628,6 +664,7 @@ export type Database = {
         Row: {
           applied_date: string
           created_at: string
+          deleted_at: string | null
           id: string
           name: string
           next_dose_date: string | null
@@ -637,6 +674,7 @@ export type Database = {
         Insert: {
           applied_date: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name: string
           next_dose_date?: string | null
@@ -646,6 +684,7 @@ export type Database = {
         Update: {
           applied_date?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           next_dose_date?: string | null

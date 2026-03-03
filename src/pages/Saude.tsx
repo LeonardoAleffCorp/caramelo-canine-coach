@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLog';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Plus, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import { getWeightStatus, getWeightLabel } from '@/lib/weight';
@@ -84,6 +85,7 @@ export default function Saude() {
       toast.success('Vacina atualizada! ✏️');
     } else {
       await supabase.from('vaccines').insert({ pet_id: pet.id, name: vName, applied_date: vDate, next_dose_date: vNext || null });
+      logActivity('vaccine_added', { vaccine: vName });
       toast.success('Vacina registrada! 💉');
     }
     setShowVaccineModal(false); setVName(''); setVDate(''); setVNext(''); setEditingVaccine(null);
@@ -100,6 +102,7 @@ export default function Saude() {
     const weightVal = parseFloat(newWeight);
     await supabase.from('weight_logs').insert({ pet_id: pet.id, weight_kg: weightVal });
     await supabase.from('pets').update({ weight_kg: weightVal }).eq('id', pet.id);
+    logActivity('weight_logged', { weight_kg: weightVal });
     toast.success('Peso registrado! ⚖️');
     setShowWeightModal(false); setNewWeight('1'); fetchData();
   };

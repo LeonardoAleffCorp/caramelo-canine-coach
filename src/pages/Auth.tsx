@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLog';
 import mascotImg from '@/assets/caramelo-mascot.png';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -21,9 +22,11 @@ export default function Auth() {
     try {
       if (isLogin) {
         await signIn(email, password);
+        logActivity('login');
         toast.success('Bem-vindo de volta! 🐕');
       } else {
         await signUp(email, password, fullName);
+        logActivity('signup');
         toast.success('Conta criada! 🎉');
       }
     } catch (err: any) {

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -91,22 +92,24 @@ const App = () => {
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-        <BrowserRouter>
-          <AuthProvider>
-            <PetProvider>
-              <SubscriptionProvider>
-                <AppRoutes />
-              </SubscriptionProvider>
-            </PetProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+          <BrowserRouter>
+            <AuthProvider>
+              <PetProvider>
+                <SubscriptionProvider>
+                  <AppRoutes />
+                </SubscriptionProvider>
+              </PetProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

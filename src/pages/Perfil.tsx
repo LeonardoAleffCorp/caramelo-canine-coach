@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { LogOut } from 'lucide-react';
 import { getBreedDefaultImage } from '@/lib/breedImages';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLog';
 
 interface Achievement {
   name: string;
@@ -51,6 +52,7 @@ export default function Perfil() {
   const handlePhotoUploaded = async (url: string) => {
     await supabase.from('pets').update({ photo_url: url }).eq('id', pet.id);
     await refreshPet();
+    logActivity('photo_uploaded', { pet_id: pet.id });
   };
 
   const handlePhotoDeleted = async () => {
@@ -140,7 +142,7 @@ export default function Perfil() {
         </div>
 
         <div className="mt-4 pb-8">
-          <Button variant="outline" onClick={signOut} className="w-full rounded-xl">
+          <Button variant="outline" onClick={() => { logActivity('logout'); signOut(); }} className="w-full rounded-xl">
             <LogOut className="mr-2 h-4 w-4" /> Sair
           </Button>
         </div>
