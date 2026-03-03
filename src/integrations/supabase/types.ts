@@ -618,6 +618,57 @@ export type Database = {
           },
         ]
       }
+      tutor_profiles: {
+        Row: {
+          address_city: string | null
+          address_neighborhood: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
+          address_zip: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_city?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_city?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -696,6 +747,53 @@ export type Database = {
             foreignKeyName: "vaccines_pet_id_fkey"
             columns: ["pet_id"]
             isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vet_clinics: {
+        Row: {
+          address: string | null
+          clinic_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          pet_id: string
+          phone: string | null
+          updated_at: string
+          vet_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          pet_id: string
+          phone?: string | null
+          updated_at?: string
+          vet_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          pet_id?: string
+          phone?: string | null
+          updated_at?: string
+          vet_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vet_clinics_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: true
             referencedRelation: "pets"
             referencedColumns: ["id"]
           },
