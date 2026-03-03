@@ -6,6 +6,16 @@ import { usePet } from '@/hooks/usePet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLog';
+
+const MIN_DATE = '2000-01-01';
+const MAX_AGE_YEARS = 50;
+const funnyOldDogMessages = [
+  '🧓 Uau, seu cachorro é mais velho que a internet! Tem certeza dessa data?',
+  '🦴 Esse cão conviveu com os dinossauros? Confere a data aí!',
+  '👴 Com essa idade, ele já é patrimônio histórico! Será que não errou?',
+  '🐕‍🦺 Cachorro imortal? Verifica essa data, humano!',
+];
 import BreedPicker from '@/components/BreedPicker';
 import PetPhotoUpload from '@/components/PetPhotoUpload';
 import PageHeader from '@/components/PageHeader';
@@ -19,6 +29,7 @@ export default function CadastrarPet() {
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [birthDateWarning, setBirthDateWarning] = useState('');
   const [weightKg, setWeightKg] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +40,19 @@ export default function CadastrarPet() {
     const now = new Date();
     return Math.max(1, (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth()));
   }, []);
+
+  const handleBirthDateChange = (value: string) => {
+    setBirthDate(value);
+    setBirthDateWarning('');
+    if (!value) return;
+    const birth = new Date(value);
+    const now = new Date();
+    const ageYears = (now.getTime() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (ageYears > MAX_AGE_YEARS) {
+      const msg = funnyOldDogMessages[Math.floor(Math.random() * funnyOldDogMessages.length)];
+      setBirthDateWarning(msg);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +84,7 @@ export default function CadastrarPet() {
       }
 
       await refreshPet();
+      logActivity('pet_created', { pet_name: name, breed: breed || 'Vira-lata/SRD' });
       toast.success(`${name} cadastrado! 🎉`);
       navigate('/');
     } catch (err: any) {
@@ -85,7 +110,10 @@ export default function CadastrarPet() {
           <BreedPicker value={breed} onChange={setBreed} />
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground">Data de nascimento</label>
-            <Input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().split('T')[0]} className="h-12 rounded-xl bg-card text-base" />
+            <Input type="date" value={birthDate} onChange={e => handleBirthDateChange(e.target.value)} min={MIN_DATE} max={new Date().toISOString().split('T')[0]} className="h-12 rounded-xl bg-card text-base" />
+            {birthDateWarning && (
+              <p className="mt-1 text-xs font-bold text-amber-500 animate-bounce-in">{birthDateWarning}</p>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground">Peso (kg)</label>
