@@ -7,6 +7,9 @@ import VaccinePicker from '@/components/VaccinePicker';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import DiseasesTab from '@/components/DiseasesTab';
 import MedicationsTab from '@/components/MedicationsTab';
+import TutorTab from '@/components/TutorTab';
+import VetTab from '@/components/VetTab';
+import FichaCanina from '@/components/FichaCanina';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +20,7 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 import { Plus, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import { getWeightStatus, getWeightLabel } from '@/lib/weight';
 import { vaccineReminders } from '@/lib/vaccineReminders';
+import { type EquippedSticker } from '@/lib/stickerEmojis';
 
 interface Vaccine {
   id: string; name: string; applied_date: string; next_dose_date: string | null; notes: string | null;
@@ -24,7 +28,6 @@ interface Vaccine {
 interface WeightLog {
   id: string; weight_kg: number; recorded_at: string;
 }
-import { type EquippedSticker } from '@/lib/stickerEmojis';
 
 export default function Saude() {
   const { pet } = usePet();
@@ -53,13 +56,10 @@ export default function Saude() {
     const { data: breed } = await supabase.from('breeds').select('size_category').eq('name', pet.breed).maybeSingle();
     if (breed) setBreedSize(breed.size_category);
 
-    // Load stickers from localStorage
     const storedStickers = localStorage.getItem(`avatar_stickers_${pet.id}`);
     if (storedStickers) {
       try { setEquippedStickers(JSON.parse(storedStickers)); } catch { setEquippedStickers([]); }
     }
-    
-    // Load color
     const storedColor = localStorage.getItem(`avatar_color_${pet.id}`);
     if (storedColor) setPetColor(storedColor);
     else setPetColor(undefined);
@@ -120,15 +120,66 @@ export default function Saude() {
     <Layout>
       <PageHeader title="Saúde 🏥" />
       <div className="px-5">
-        <Tabs defaultValue="vacinas" className="mt-2">
-          <TabsList className="w-full rounded-xl bg-muted">
-            <TabsTrigger value="vacinas" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">💉 Vacinas</TabsTrigger>
-            <TabsTrigger value="peso" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">⚖️ Peso</TabsTrigger>
-            <TabsTrigger value="doencas" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">🦠 Doenças</TabsTrigger>
-            <TabsTrigger value="medicacao" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">💊 Medicação</TabsTrigger>
-            <TabsTrigger value="lembretes" className="flex-1 rounded-lg text-[9px] font-bold px-0.5">🔔 Lembretes</TabsTrigger>
+        <Tabs defaultValue="ficha" className="mt-2">
+          <TabsList className="w-full rounded-xl bg-muted flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="ficha" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">📋 Ficha</TabsTrigger>
+            <TabsTrigger value="peso" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">⚖️ Peso</TabsTrigger>
+            <TabsTrigger value="vacinas" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">💉 Vacinas</TabsTrigger>
+            <TabsTrigger value="doencas" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">🦠 Doenças</TabsTrigger>
+            <TabsTrigger value="medicacao" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">💊 Medicação</TabsTrigger>
+            <TabsTrigger value="tutor" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">👤 Tutor</TabsTrigger>
+            <TabsTrigger value="vet" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">🏥 Vet</TabsTrigger>
+            <TabsTrigger value="lembretes" className="flex-1 rounded-lg text-[10px] font-bold px-1 py-1.5 min-w-[60px]">🔔 Lembretes</TabsTrigger>
           </TabsList>
 
+          {/* FICHA CANINA - default tab */}
+          <TabsContent value="ficha">
+            {pet && <FichaCanina pet={pet} />}
+          </TabsContent>
+
+          {/* PESO - moved before vacinas */}
+          <TabsContent value="peso" className="mt-4">
+            {pet && (
+              <div className="mb-4 flex flex-col items-center">
+                <PetAvatarPreview breed={pet.breed} equippedStickers={equippedStickers} size="md" weightStatus={weightStatus} colorId={petColor} />
+              </div>
+            )}
+            {weightInfo && (
+              <div className="mb-4 flex flex-col items-center rounded-2xl bg-card p-4 shadow-sm">
+                <div className={`text-lg font-extrabold ${weightInfo.color}`}>
+                  {weightInfo.emoji} {weightInfo.label}
+                </div>
+                <div className="text-xs text-muted-foreground">{currentWeight} kg • Porte {breedSize}</div>
+              </div>
+            )}
+            <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                <strong>Aviso:</strong> Este é apenas um diagnóstico prévio baseado no porte da raça. Qualquer mudança na alimentação ou atitude do seu pet deve ser consultada com um médico veterinário.
+              </p>
+            </div>
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex-1 rounded-2xl bg-card p-4 shadow-sm text-center">
+                <div className="text-xs text-muted-foreground">Peso atual</div>
+                <div className="text-2xl font-extrabold text-foreground">{currentWeight ? `${currentWeight} kg` : '—'}</div>
+              </div>
+              <Button onClick={() => setShowWeightModal(true)} size="icon" className="h-12 w-12 rounded-xl"><Plus className="h-5 w-5" /></Button>
+            </div>
+            {chartData.length > 1 && (
+              <div className="h-48 rounded-2xl bg-card p-4 shadow-sm">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 1', 'dataMax + 1']} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="peso" stroke="hsl(38, 92%, 50%)" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* VACINAS */}
           <TabsContent value="vacinas" className="mt-4">
             <Button onClick={openAddVaccine} className="mb-4 w-full rounded-xl">
               <Plus className="mr-2 h-4 w-4" /> Adicionar Vacina
@@ -150,62 +201,6 @@ export default function Saude() {
             </div>
           </TabsContent>
 
-          <TabsContent value="peso" className="mt-4">
-            {/* Pet avatar with stickers */}
-            {pet && (
-              <div className="mb-4 flex flex-col items-center">
-                <PetAvatarPreview
-                  breed={pet.breed}
-                  equippedStickers={equippedStickers}
-                  size="md"
-                  weightStatus={weightStatus}
-                  colorId={petColor}
-                />
-              </div>
-            )}
-
-            {weightInfo && (
-              <div className="mb-4 flex flex-col items-center rounded-2xl bg-card p-4 shadow-sm">
-                <div className={`text-lg font-extrabold ${weightInfo.color}`}>
-                  {weightInfo.emoji} {weightInfo.label}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {currentWeight} kg • Porte {breedSize}
-                </div>
-              </div>
-            )}
-
-            {/* Veterinary disclaimer */}
-            <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
-              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-              <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
-                <strong>Aviso:</strong> Este é apenas um diagnóstico prévio baseado no porte da raça. Qualquer mudança na alimentação ou atitude do seu pet deve ser consultada com um médico veterinário. Só faça alterações com prescrição profissional.
-              </p>
-            </div>
-
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex-1 rounded-2xl bg-card p-4 shadow-sm text-center">
-                <div className="text-xs text-muted-foreground">Peso atual</div>
-                <div className="text-2xl font-extrabold text-foreground">
-                  {currentWeight ? `${currentWeight} kg` : '—'}
-                </div>
-              </div>
-              <Button onClick={() => setShowWeightModal(true)} size="icon" className="h-12 w-12 rounded-xl"><Plus className="h-5 w-5" /></Button>
-            </div>
-            {chartData.length > 1 && (
-              <div className="h-48 rounded-2xl bg-card p-4 shadow-sm">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 1', 'dataMax + 1']} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="peso" stroke="hsl(38, 92%, 50%)" strokeWidth={2} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </TabsContent>
-
           <TabsContent value="doencas">
             {pet && <DiseasesTab petId={pet.id} />}
           </TabsContent>
@@ -214,10 +209,19 @@ export default function Saude() {
             {pet && <MedicationsTab petId={pet.id} petName={pet.name} />}
           </TabsContent>
 
+          {/* TUTOR */}
+          <TabsContent value="tutor">
+            <TutorTab />
+          </TabsContent>
+
+          {/* VET */}
+          <TabsContent value="vet">
+            {pet && <VetTab petId={pet.id} />}
+          </TabsContent>
+
+          {/* LEMBRETES */}
           <TabsContent value="lembretes" className="mt-4">
-            <p className="mb-3 text-xs text-muted-foreground">
-              📋 Calendário completo de cuidados para seu pet. Toque para ver detalhes.
-            </p>
+            <p className="mb-3 text-xs text-muted-foreground">📋 Calendário completo de cuidados para seu pet.</p>
             <div className="space-y-3 pb-4">
               {vaccineReminders.map((item) => (
                 <details key={item.name} className="group rounded-2xl bg-card shadow-sm overflow-hidden">
