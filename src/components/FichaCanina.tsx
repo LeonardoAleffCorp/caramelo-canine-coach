@@ -5,10 +5,12 @@ import { usePet } from '@/hooks/usePet';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { getWeightLabel } from '@/lib/weight';
 import { type EquippedSticker } from '@/lib/stickerEmojis';
-import { User, Phone, Mail, MapPin, Building2, Dog, Syringe, Pill, HeartPulse, Share2, Download } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Building2, Dog, Syringe, Pill, HeartPulse, Share2, Download, FileDown, Loader2 } from 'lucide-react';
 import { getLifeStage } from '@/lib/breedAge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface FichaProps {
   pet: {
@@ -73,88 +75,106 @@ export default function FichaCanina({ pet }: FichaProps) {
   const lifeStage = getLifeStage(pet.age_months, pet.breed);
   const ageText = `${Math.floor(pet.age_months / 12)} anos e ${pet.age_months % 12} meses (${lifeStage.emoji} ${lifeStage.stage})`;
 
-  const exportFicha = async () => {
+  const [exporting, setExporting] = useState(false);
+
+  const exportFichaPdf = async () => {
     if (!fichaRef.current) return;
+    setExporting(true);
+    toast.loading('Gerando PDF bonito... 🐾', { id: 'pdf-export' });
 
-    // Build plain text version for sharing
-    const lines: string[] = [];
-    lines.push(`🐶 FICHA CANINA - ${pet.name}`);
-    lines.push(`${'─'.repeat(30)}`);
-    lines.push(`📋 DADOS DO DOG`);
-    lines.push(`Nome: ${pet.name}`);
-    lines.push(`Raça: ${pet.breed}`);
-    lines.push(`Idade: ${ageText}`);
-    if (currentWeight) lines.push(`Peso: ${currentWeight} kg`);
-    if (weightInfo) lines.push(`Status: ${weightInfo.emoji} ${weightInfo.label}`);
-    if (pet.birth_date) lines.push(`Nascimento: ${new Date(pet.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}`);
-    lines.push(`Porte: ${breedSize}`);
-    lines.push('');
+    try {
+      // Capture the ficha div as an image
+      const canvas = await html2canvas(fichaRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
 
-    if (tutor) {
-      lines.push(`👤 DADOS DO TUTOR`);
-      if (tutor.full_name) lines.push(`Nome: ${tutor.full_name}`);
-      if (tutor.email) lines.push(`E-mail: ${tutor.email}`);
-      if (tutor.phone) lines.push(`Telefone: ${tutor.phone}`);
-      const addr = [tutor.address_street, tutor.address_number, tutor.address_neighborhood, tutor.address_city, tutor.address_state].filter(Boolean).join(', ');
-      if (addr) lines.push(`Endereço: ${addr}`);
-      if (tutor.address_zip) lines.push(`CEP: ${tutor.address_zip}`);
-      lines.push('');
-    }
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
 
-    if (vet) {
-      lines.push(`🏥 DADOS DA VETERINÁRIA`);
-      if (vet.clinic_name) lines.push(`Clínica: ${vet.clinic_name}`);
-      if (vet.vet_name) lines.push(`Veterinário(a): ${vet.vet_name}`);
-      if (vet.phone) lines.push(`Telefone: ${vet.phone}`);
-      if (vet.email) lines.push(`E-mail: ${vet.email}`);
-      if (vet.address) lines.push(`Endereço: ${vet.address}`);
-      lines.push('');
-    }
+      // A4 dimensions in mm
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const margin = 10;
+      const contentWidth = pdfWidth - margin * 2;
+      
+      // Scale image to fit page width
+      const ratio = contentWidth / (imgWidth / 2); // /2 because scale:2
+      const scaledHeight = (imgHeight / 2) * ratio;
 
-    if (vaccines.length > 0) {
-      lines.push(`💉 VACINAS`);
-      vaccines.forEach(v => lines.push(`• ${v.name} - ${new Date(v.applied_date).toLocaleDateString('pt-BR')}`));
-      lines.push('');
-    }
+      const pdf = new jsPDF('p', 'mm', 'a4');
 
-    if (diseases.length > 0) {
-      lines.push(`🦠 DOENÇAS`);
-      diseases.forEach(d => lines.push(`• ${d.disease_name} - ${d.treatment_status === 'em_tratamento' ? '🔴 Em tratamento' : '🟢 Concluído'}`));
-      lines.push('');
-    }
+      // If content fits in one page
+      if (scaledHeight <= pdfHeight - margin * 2) {
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, scaledHeight);
+      } else {
+        // Multi-page: slice the canvas
+        const pageContentHeight = pdfHeight - margin * 2;
+        const sourceSliceHeight = pageContentHeight / ratio * 2; // in canvas pixels
+        let yOffset = 0;
+        let page = 0;
 
-    if (medications.length > 0) {
-      lines.push(`💊 MEDICAÇÕES`);
-      medications.forEach(m => lines.push(`• ${m.name}${m.dosage ? ` - ${m.dosage}` : ''}`));
-      lines.push('');
-    }
-
-    lines.push(`📅 Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`);
-
-    const text = lines.join('\n');
-
-    // Try native share first (mobile)
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `Ficha Canina - ${pet.name}`, text });
-        toast.success('Ficha compartilhada! 📤');
-        return;
-      } catch {
-        // User cancelled or not supported
+        while (yOffset < imgHeight) {
+          if (page > 0) pdf.addPage();
+          
+          // Create a slice canvas
+          const sliceHeight = Math.min(sourceSliceHeight, imgHeight - yOffset);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = imgWidth;
+          sliceCanvas.height = sliceHeight;
+          const ctx = sliceCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, -yOffset);
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            const displayHeight = (sliceHeight / 2) * ratio;
+            pdf.addImage(sliceData, 'PNG', margin, margin, contentWidth, displayHeight);
+          }
+          
+          yOffset += sourceSliceHeight;
+          page++;
+        }
       }
-    }
 
-    // Fallback: download as .txt
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ficha-${pet.name.toLowerCase().replace(/\s+/g, '-')}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Ficha exportada! 📥');
+      // Add footer on last page
+      pdf.setFontSize(8);
+      pdf.setTextColor(150);
+      const footerText = `Ficha Canina - ${pet.name} | Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} | Caramelo Canine Coach`;
+      pdf.text(footerText, pdfWidth / 2, pdfHeight - 5, { align: 'center' });
+
+      const fileName = `ficha-${pet.name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+
+      // Try to share as file on mobile
+      if (navigator.share && navigator.canShare) {
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `Ficha Canina - ${pet.name}`,
+              files: [file],
+            });
+            toast.success('Ficha compartilhada! 📤', { id: 'pdf-export' });
+            return;
+          } catch {
+            // User cancelled, fall through to download
+          }
+        }
+      }
+
+      // Fallback: download
+      pdf.save(fileName);
+      toast.success('PDF baixado! 📥', { id: 'pdf-export' });
+    } catch (err) {
+      console.error('PDF export error:', err);
+      toast.error('Erro ao gerar PDF 😔', { id: 'pdf-export' });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
@@ -181,9 +201,9 @@ export default function FichaCanina({ pet }: FichaProps) {
   return (
     <div className="mt-4 space-y-4 pb-4" ref={fichaRef}>
       {/* Export button */}
-      <Button onClick={exportFicha} variant="outline" className="w-full rounded-xl gap-2">
-        <Share2 className="h-4 w-4" />
-        Exportar / Compartilhar Ficha
+      <Button onClick={exportFichaPdf} variant="outline" className="w-full rounded-xl gap-2" disabled={exporting}>
+        {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+        {exporting ? 'Gerando PDF...' : 'Baixar / Compartilhar PDF'}
       </Button>
 
       {/* Pet header */}
