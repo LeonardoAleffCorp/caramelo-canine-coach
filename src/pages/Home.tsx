@@ -9,14 +9,13 @@ import PetSwitcher from '@/components/PetSwitcher';
 import PetAvatarPreview from '@/components/PetAvatarPreview';
 import { Progress } from '@/components/ui/progress';
 import { getBreedDefaultImage } from '@/lib/breedImages';
-import { getStickerById, type EquippedSticker } from '@/lib/stickerEmojis';
+import { type EquippedSticker } from '@/lib/stickerEmojis';
 
 interface Category {
   id: string;
   name: string;
   emoji: string;
 }
-
 
 function formatAge(ageMonths: number, birthDate?: string | null): string {
   if (birthDate) {
@@ -39,12 +38,14 @@ function formatAge(ageMonths: number, birthDate?: string | null): string {
 }
 
 export default function Home() {
-  const { pet, stats } = usePet();
+  const { pet, stats, weightStatus } = usePet();
   const { daysLeft, isTrial } = useSubscription();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [equippedStickers, setEquippedStickers] = useState<EquippedSticker[]>([]);
   const [petColor, setPetColor] = useState<string | undefined>(undefined);
+  const [frameId, setFrameId] = useState<string | undefined>(undefined);
+  const [bgColorId, setBgColorId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     supabase.from('training_categories').select('*').order('sort_order').then(({ data }) => {
@@ -54,19 +55,23 @@ export default function Home() {
 
   useEffect(() => {
     if (!pet) return;
-    
-    // Load stickers
     const storedStickers = localStorage.getItem(`avatar_stickers_${pet.id}`);
     if (storedStickers) {
       try { setEquippedStickers(JSON.parse(storedStickers)); } catch { setEquippedStickers([]); }
     } else {
       setEquippedStickers([]);
     }
-
-    // Load color
     const storedColor = localStorage.getItem(`avatar_color_${pet.id}`);
     if (storedColor) setPetColor(storedColor);
     else setPetColor(undefined);
+
+    const storedFrame = localStorage.getItem(`avatar_frame_${pet.id}`);
+    if (storedFrame) setFrameId(storedFrame);
+    else setFrameId(undefined);
+
+    const storedBg = localStorage.getItem(`avatar_bg_${pet.id}`);
+    if (storedBg) setBgColorId(storedBg);
+    else setBgColorId(undefined);
   }, [pet]);
 
   if (!pet || !stats) return null;
@@ -80,7 +85,6 @@ export default function Home() {
   return (
     <Layout>
       <div className="px-5 pt-8">
-        {/* Header with pet switcher */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
@@ -96,7 +100,6 @@ export default function Home() {
           <PetSwitcher />
         </div>
 
-        {/* Subscription badge */}
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-accent/50 px-3 py-1.5">
           <span className="text-sm">{isTrial ? '🎁' : '⭐'}</span>
           <span className="text-xs font-bold text-foreground">
@@ -104,7 +107,6 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Streak + XP Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-accent p-4">
             <div className="text-3xl">🔥</div>
@@ -120,7 +122,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Continue */}
         <button
           onClick={() => navigate('/treinos')}
           className="mt-6 flex w-full items-center gap-3 rounded-2xl bg-primary p-4 text-left transition-transform active:scale-[0.98]"
@@ -132,7 +133,6 @@ export default function Home() {
           </div>
         </button>
 
-        {/* Categories */}
         <h2 className="mb-3 mt-8 text-lg font-bold text-foreground">Categorias</h2>
         <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none">
           {categories.map((cat) => (
@@ -147,13 +147,16 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Pet Avatar with stickers */}
+        {/* Pet Avatar with stickers - now includes weight status */}
         <div className="mt-4 mb-8 flex flex-col items-center">
           <PetAvatarPreview
             breed={pet.breed}
             equippedStickers={equippedStickers}
             size="lg"
             colorId={petColor}
+            weightStatus={weightStatus || undefined}
+            frameId={frameId}
+            bgColor={bgColorId}
           />
           <p className="mt-2 text-xs text-muted-foreground">Seu avatar com adesivos ✨</p>
         </div>
