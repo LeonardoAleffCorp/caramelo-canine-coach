@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import mascotImg from '@/assets/caramelo-mascot.png';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -12,17 +13,27 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    // Check if this is a recovery session
+    // Listen for recovery event from the auth redirect
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      }
+    });
+
+    // Also check hash for recovery token
     const hash = window.location.hash;
     if (hash.includes('type=recovery')) {
       setIsRecovery(true);
     }
 
-    // Listen for auth state change with recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    // Check if there's already a session with recovery type
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // If user landed here with a valid session from recovery link, allow reset
         setIsRecovery(true);
       }
     });
@@ -45,6 +56,8 @@ export default function ResetPassword() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast.success('Senha atualizada com sucesso! 🎉');
+      // Sign out so user logs in with new password
+      await supabase.auth.signOut();
       navigate('/');
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar senha');
@@ -71,27 +84,45 @@ export default function ResetPassword() {
       <img src={mascotImg} alt="Caramelo" className="h-20 w-20 rounded-full shadow-lg mb-6" />
       <h1 className="text-2xl font-extrabold text-foreground mb-2">Nova senha 🔑</h1>
       <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">
-        Crie uma nova senha para sua conta.
+        Digite sua nova senha duas vezes para confirmar a alteração.
       </p>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3">
-        <Input
-          type="password"
-          placeholder="Nova senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-          className="h-12 rounded-xl bg-card text-base"
-        />
-        <Input
-          type="password"
-          placeholder="Confirmar nova senha"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          minLength={6}
-          className="h-12 rounded-xl bg-card text-base"
-        />
+        <div className="relative">
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Nova senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            className="h-12 rounded-xl bg-card text-base pr-12"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+        <div className="relative">
+          <Input
+            type={showConfirm ? 'text' : 'password'}
+            placeholder="Confirmar nova senha"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={6}
+            className="h-12 rounded-xl bg-card text-base pr-12"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm(!showConfirm)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
         <Button type="submit" disabled={loading} className="h-14 w-full rounded-2xl text-lg font-bold">
           {loading ? '...' : 'Atualizar senha ✅'}
         </Button>
